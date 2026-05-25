@@ -131,6 +131,7 @@ class AppState extends ChangeNotifier {
   bool vacationMode = false;
   bool notificationsEnabled = true;
   bool isLoggedIn = false;
+  bool justSignedOut = false;
   String? sessionEmail;
 
   List<CommunityPost> get communityPosts => List.unmodifiable(_communityPosts);
@@ -389,6 +390,7 @@ class AppState extends ChangeNotifier {
 
     sessionEmail = trimmedEmail;
     isLoggedIn = true;
+    justSignedOut = false;
     if (isSignup && trimmedName.isNotEmpty) {
       profileName = trimmedName;
     }
@@ -401,7 +403,16 @@ class AppState extends ChangeNotifier {
   Future<void> signOutLocal() async {
     isLoggedIn = false;
     sessionEmail = null;
-    await _saveAuthSession();
+    justSignedOut = true;
+    // Update listeners immediately so navigation can respond without
+    // waiting for SharedPreferences I/O (which can be flaky in tests).
+    notifyListeners();
+    // Persist auth session in the background; don't block UI.
+    Future(() => _saveAuthSession());
+  }
+
+  void prepareLoginFlow() {
+    justSignedOut = false;
     notifyListeners();
   }
 
