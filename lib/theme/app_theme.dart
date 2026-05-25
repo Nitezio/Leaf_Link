@@ -30,15 +30,13 @@ class AppTheme {
   static ThemeData get theme {
     final base = ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.light(
-        background: AppColors.background,
+      colorScheme: const ColorScheme.light(
         surface: AppColors.card,
         primary: AppColors.primary,
         secondary: AppColors.secondary,
         error: AppColors.destructive,
         onPrimary: AppColors.primaryForeground,
         onSecondary: AppColors.secondaryForeground,
-        onBackground: AppColors.foreground,
         onSurface: AppColors.foreground,
         outline: AppColors.border,
       ),
@@ -63,15 +61,15 @@ class AppTheme {
         fillColor: AppColors.card,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: AppColors.secondary, width: 2),
+          borderSide: const BorderSide(color: AppColors.secondary, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       ),

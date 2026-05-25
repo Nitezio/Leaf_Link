@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_body.dart';
 
 class LoginScreen extends StatefulWidget {
-  final VoidCallback onLogin;
-  const LoginScreen({super.key, required this.onLogin});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -13,6 +14,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isSignup = false;
   bool _showPassword = false;
+  bool _isLoading = false;
+  String? _errorText;
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
@@ -25,6 +28,34 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    setState(() {
+      _isLoading = true;
+      _errorText = null;
+    });
+    final state = context.read<AppState>();
+    final error = await state.authenticateLocal(
+      email: _emailCtrl.text,
+      password: _passwordCtrl.text,
+      isSignup: _isSignup,
+      name: _nameCtrl.text,
+    );
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _errorText = error;
+    });
+    if (error == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isSignup ? 'Account created locally' : 'Signed in locally'),
+          backgroundColor: AppColors.secondary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,12 +65,12 @@ class _LoginScreenState extends State<LoginScreen> {
           Positioned(
             top: -80,
             right: -80,
-            child: _blob(250, AppColors.secondary.withOpacity(0.2)),
+            child: _blob(250, AppColors.secondary.withValues(alpha: 0.2)),
           ),
           Positioned(
             bottom: -100,
             left: -100,
-            child: _blob(300, AppColors.primary.withOpacity(0.1)),
+            child: _blob(300, AppColors.primary.withValues(alpha: 0.1)),
           ),
           SafeArea(
             child: ResponsiveBody(
@@ -64,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withOpacity(0.15),
+                                color: AppColors.primary.withValues(alpha: 0.15),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -74,9 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               size: 32, color: Colors.white),
                         ),
                         const SizedBox(width: 12),
-                        Column(
+                        const Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
                               'PlantCare Pro',
                               style: TextStyle(
@@ -176,31 +207,51 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: widget.onLogin,
+                        onPressed: _isLoading ? null : _submit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: const StadiumBorder(),
                           elevation: 4,
-                          shadowColor: AppColors.primary.withOpacity(0.2),
+                          shadowColor: AppColors.primary.withValues(alpha: 0.2),
                         ),
-                        child: Text(
-                          _isSignup ? 'Create Account' : 'Sign In',
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                _isSignup ? 'Create Account' : 'Sign In',
+                                style: const TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
                       ),
                     ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _errorText!,
+                        style: const TextStyle(
+                          color: AppColors.destructive,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 28),
 
                     // Divider
-                    Row(
+                    const Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                             child:
                                 Divider(color: AppColors.border, thickness: 1)),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'Or continue with',
                             style: TextStyle(
@@ -209,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ),
-                        const Expanded(
+                        Expanded(
                             child:
                                 Divider(color: AppColors.border, thickness: 1)),
                       ],
@@ -221,11 +272,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Expanded(
                             child: _socialBtn(
-                                'Google', _googleIcon(), widget.onLogin)),
+                                'Google', _googleIcon(), _submit)),
                         const SizedBox(width: 12),
                         Expanded(
-                            child: _socialBtn(
-                                'GitHub', _githubIcon(), widget.onLogin)),
+                              child: _socialBtn(
+                                'GitHub', _githubIcon(), _submit)),
                       ],
                     ),
                     const SizedBox(height: 28),
@@ -377,3 +428,4 @@ class _GooglePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

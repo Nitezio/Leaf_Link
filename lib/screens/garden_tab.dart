@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
 import '../theme/app_theme.dart';
+import 'add_edit_plant_screen.dart';
+import 'plant_detail_screen.dart';
 import '../widgets/plant_card.dart';
 import '../widgets/responsive_body.dart';
 
@@ -33,12 +35,23 @@ class GardenTab extends StatelessWidget {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.add_rounded,
-                        color: Colors.white, size: 22),
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.add_rounded,
+                          color: Colors.white, size: 22),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AddEditPlantScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -95,6 +108,14 @@ class GardenTab extends StatelessWidget {
                       );
                     },
                     onScan: (_) {},
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PlantDetailScreen(plantId: plant.id),
+                        ),
+                      );
+                    },
                   ),
                 )),
             const SizedBox(height: 16),

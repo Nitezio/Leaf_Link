@@ -36,6 +36,8 @@ class PlantCareApp extends StatelessWidget {
       title: 'PlantCare Pro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
+      darkTheme: AppTheme.theme,
+      themeMode: ThemeMode.light,
       home: const _RootNavigator(),
     );
   }
@@ -51,17 +53,15 @@ class _RootNavigator extends StatefulWidget {
 
 class _RootNavigatorState extends State<_RootNavigator> {
   bool _showLogin = false;
-  bool _isLoggedIn = false;
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoggedIn) {
+    final state = context.watch<AppState>();
+    if (state.isLoggedIn) {
       return const HomeScreen();
     }
     if (_showLogin) {
-      return LoginScreen(
-        onLogin: () => setState(() => _isLoggedIn = true),
-      );
+      return const LoginScreen();
     }
     return WelcomeScreen(
       onGetStarted: () => setState(() {

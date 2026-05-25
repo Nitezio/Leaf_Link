@@ -17,7 +17,7 @@ class WelcomeScreen extends StatelessWidget {
 
           final hero =
               _heroImage(height: isWide ? constraints.maxHeight : heroHeight);
-          final content = _WelcomeContent(
+          final content = welcomeContent(
             onGetStarted: onGetStarted,
             centerAligned: !isWide,
             denseLayout: isCompactHeight,
@@ -61,12 +61,12 @@ class WelcomeScreen extends StatelessWidget {
               Positioned(
                 top: -100,
                 left: -100,
-                child: _blob(300, AppColors.secondary.withOpacity(0.2)),
+                child: _blob(300, AppColors.secondary.withValues(alpha: 0.2)),
               ),
               Positioned(
                 bottom: -50,
                 right: -80,
-                child: _blob(280, AppColors.primary.withOpacity(0.1)),
+                child: _blob(280, AppColors.primary.withValues(alpha: 0.1)),
               ),
               SafeArea(bottom: false, child: layout),
             ],
@@ -98,7 +98,7 @@ class WelcomeScreen extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppColors.background.withOpacity(0.6),
+                  AppColors.background.withValues(alpha: 0.6),
                   AppColors.background,
                 ],
                 stops: const [0.5, 0.8, 1.0],
@@ -110,7 +110,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _WelcomeContent({
+  Widget welcomeContent({
     required VoidCallback onGetStarted,
     required bool centerAligned,
     required bool denseLayout,
@@ -140,7 +140,7 @@ class WelcomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
+                    color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -208,7 +208,7 @@ class WelcomeScreen extends StatelessWidget {
                 foregroundColor: Colors.white,
                 shape: const StadiumBorder(),
                 elevation: 4,
-                shadowColor: AppColors.primary.withOpacity(0.3),
+                shadowColor: AppColors.primary.withValues(alpha: 0.3),
               ),
             ),
           ),
@@ -256,7 +256,7 @@ class WelcomeScreen extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.secondary.withOpacity(0.1),
+            color: AppColors.secondary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child:
@@ -281,10 +281,11 @@ class WelcomeScreen extends StatelessWidget {
     return Container(
       width: 6,
       height: 6,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.muted,
         shape: BoxShape.circle,
       ),
     );
   }
 }
+

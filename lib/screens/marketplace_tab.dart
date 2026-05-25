@@ -389,7 +389,7 @@ class _ItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.07),
+            color: AppColors.primary.withValues(alpha: 0.07),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -551,3 +551,4 @@ class _CartRow extends StatelessWidget {
     );
   }
 }
+

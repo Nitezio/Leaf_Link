@@ -7,20 +7,28 @@ import 'models.dart';
 
 class AppState extends ChangeNotifier {
   static const _communityPrefsKey = 'community_posts_v1';
+  static const _plantsPrefsKey = 'plants_v1';
+  static const _profilePrefsKey = 'profile_v1';
+  static const _authPrefsKey = 'auth_session_v1';
 
   AppState() {
+    plants.addAll([]);
+    _loadPlants();
+    _loadProfileSettings();
+    _loadAuthSession();
     _communityPosts.addAll(_seedCommunityPosts());
     _loadCommunityPosts();
     // Attempt background migration to Firestore (idempotent)
     migrateLocalPostsToFirestore();
   }
 
-  List<Plant> plants = [
+  final List<Plant> plants = [
     Plant(
       id: '1',
       name: 'Monstera Deliciosa',
       species: 'Swiss Cheese Plant',
       image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400',
+      notes: 'Loves bright indirect light and a weekly mist.',
       lastWatered: '2 days ago',
       nextWatering: 'Tomorrow',
       health: PlantHealth.excellent,
@@ -31,6 +39,7 @@ class AppState extends ChangeNotifier {
       name: 'Golden Pothos',
       species: 'Epipremnum aureum',
       image: 'https://images.unsplash.com/photo-1632207691143-643e2753a2c4?w=400',
+      notes: 'Fast grower. Trim the vines to keep it bushy.',
       lastWatered: 'Yesterday',
       nextWatering: 'In 2 days',
       health: PlantHealth.good,
@@ -41,6 +50,7 @@ class AppState extends ChangeNotifier {
       name: 'Snake Plant',
       species: 'Sansevieria trifasciata',
       image: 'https://images.unsplash.com/photo-1593482892290-d86fe3016e13?w=400',
+      notes: 'Very tolerant. Water sparingly.',
       lastWatered: '5 days ago',
       nextWatering: 'Today',
       health: PlantHealth.warning,
@@ -116,6 +126,13 @@ class AppState extends ChangeNotifier {
 
   final List<CartItem> cartItems = [];
 
+  String profileName = 'Plant Parent';
+  String profileEmoji = '🌿';
+  bool vacationMode = false;
+  bool notificationsEnabled = true;
+  bool isLoggedIn = false;
+  String? sessionEmail;
+
   List<CommunityPost> get communityPosts => List.unmodifiable(_communityPosts);
   bool get communityLoaded => _communityLoaded;
 
@@ -139,6 +156,33 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  Plant? getPlant(String id) {
+    for (final plant in plants) {
+      if (plant.id == id) return plant;
+    }
+    return null;
+  }
+
+  void addPlant(Plant plant) {
+    plants.insert(0, plant);
+    _savePlants();
+    notifyListeners();
+  }
+
+  void updatePlant(Plant updatedPlant) {
+    final index = plants.indexWhere((p) => p.id == updatedPlant.id);
+    if (index == -1) return;
+    plants[index] = updatedPlant;
+    _savePlants();
+    notifyListeners();
+  }
+
+  void deletePlant(String id) {
+    plants.removeWhere((p) => p.id == id);
+    _savePlants();
+    notifyListeners();
+  }
+
   void waterPlant(String id) {
     final idx = plants.indexWhere((p) => p.id == id);
     if (idx != -1) {
@@ -151,6 +195,90 @@ class AppState extends ChangeNotifier {
       userStats.streak += 1;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadPlants() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_plantsPrefsKey);
+      if (raw == null || raw.isEmpty) {
+        await _savePlants();
+        return;
+      }
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      final loadedPlants = decoded
+          .map((item) => Plant.fromMap(Map<String, dynamic>.from(item as Map)))
+          .toList();
+      plants
+        ..clear()
+        ..addAll(loadedPlants);
+      notifyListeners();
+    } catch (_) {
+      await _savePlants();
+    }
+  }
+
+  Future<void> _savePlants() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode(plants.map((p) => p.toMap()).toList());
+    await prefs.setString(_plantsPrefsKey, payload);
+  }
+
+  Future<void> _loadProfileSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_profilePrefsKey);
+      if (raw == null || raw.isEmpty) {
+        await _saveProfileSettings();
+        return;
+      }
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      profileName = (map['profileName'] as String?) ?? profileName;
+      profileEmoji = (map['profileEmoji'] as String?) ?? profileEmoji;
+      vacationMode = (map['vacationMode'] as bool?) ?? vacationMode;
+      notificationsEnabled =
+          (map['notificationsEnabled'] as bool?) ?? notificationsEnabled;
+      notifyListeners();
+    } catch (_) {
+      await _saveProfileSettings();
+    }
+  }
+
+  Future<void> _saveProfileSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode({
+      'profileName': profileName,
+      'profileEmoji': profileEmoji,
+      'vacationMode': vacationMode,
+      'notificationsEnabled': notificationsEnabled,
+    });
+    await prefs.setString(_profilePrefsKey, payload);
+  }
+
+  Future<void> _loadAuthSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_authPrefsKey);
+      if (raw == null || raw.isEmpty) {
+        await _saveAuthSession();
+        return;
+      }
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      isLoggedIn = (map['isLoggedIn'] as bool?) ?? false;
+      sessionEmail = map['sessionEmail'] as String?;
+      notifyListeners();
+    } catch (_) {
+      await _saveAuthSession();
+    }
+  }
+
+  Future<void> _saveAuthSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode({
+      'isLoggedIn': isLoggedIn,
+      'sessionEmail': sessionEmail,
+    });
+    await prefs.setString(_authPrefsKey, payload);
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
@@ -213,6 +341,67 @@ class AppState extends ChangeNotifier {
 
   void clearCart() {
     cartItems.clear();
+    notifyListeners();
+  }
+
+  void updateProfile({String? name, String? emoji}) {
+    if (name != null && name.trim().isNotEmpty) {
+      profileName = name.trim();
+    }
+    if (emoji != null && emoji.trim().isNotEmpty) {
+      profileEmoji = emoji.trim();
+    }
+    _saveProfileSettings();
+    notifyListeners();
+  }
+
+  void setVacationMode(bool value) {
+    vacationMode = value;
+    _saveProfileSettings();
+    notifyListeners();
+  }
+
+  void setNotificationsEnabled(bool value) {
+    notificationsEnabled = value;
+    _saveProfileSettings();
+    notifyListeners();
+  }
+
+  Future<String?> authenticateLocal({
+    required String email,
+    required String password,
+    required bool isSignup,
+    String? name,
+  }) async {
+    final trimmedEmail = email.trim();
+    final trimmedPassword = password.trim();
+    final trimmedName = name?.trim() ?? '';
+
+    if (trimmedEmail.isEmpty || !trimmedEmail.contains('@')) {
+      return 'Enter a valid email address.';
+    }
+    if (trimmedPassword.length < 6) {
+      return 'Password must be at least 6 characters.';
+    }
+    if (isSignup && trimmedName.isEmpty) {
+      return 'Enter your name to create an account.';
+    }
+
+    sessionEmail = trimmedEmail;
+    isLoggedIn = true;
+    if (isSignup && trimmedName.isNotEmpty) {
+      profileName = trimmedName;
+    }
+    await _saveProfileSettings();
+    await _saveAuthSession();
+    notifyListeners();
+    return null;
+  }
+
+  Future<void> signOutLocal() async {
+    isLoggedIn = false;
+    sessionEmail = null;
+    await _saveAuthSession();
     notifyListeners();
   }
 

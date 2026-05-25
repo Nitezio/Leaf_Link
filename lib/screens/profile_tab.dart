@@ -4,6 +4,7 @@ import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/gamification_panel.dart';
 import '../widgets/responsive_body.dart';
+import 'settings_screen.dart';
 
 class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
@@ -13,8 +14,6 @@ class ProfileTab extends StatefulWidget {
 }
 
 class _ProfileTabState extends State<ProfileTab> {
-  bool _vacationMode = false;
-
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -41,8 +40,9 @@ class _ProfileTabState extends State<ProfileTab> {
                           color: AppColors.secondary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Text('🌿', style: TextStyle(fontSize: 32)),
+                        child: Center(
+                          child: Text(state.profileEmoji,
+                              style: const TextStyle(fontSize: 32)),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -50,9 +50,9 @@ class _ProfileTabState extends State<ProfileTab> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Plant Parent',
-                              style: TextStyle(
+                            Text(
+                              state.profileName,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -66,15 +66,20 @@ class _ProfileTabState extends State<ProfileTab> {
                           ],
                         ),
                       ),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.settings_outlined,
+                      IconButton(
+                        onPressed: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.settings_outlined,
                             color: Colors.white, size: 20),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
                     ],
                   ),
@@ -84,7 +89,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
@@ -110,7 +115,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 8,
-                            backgroundColor: Colors.white.withOpacity(0.2),
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
                             valueColor:
                                 const AlwaysStoppedAnimation(Colors.white),
                           ),
@@ -152,7 +157,7 @@ class _ProfileTabState extends State<ProfileTab> {
               child: Column(
                 children: [
                   GestureDetector(
-                    onTap: () => setState(() => _vacationMode = !_vacationMode),
+                    onTap: () => state.setVacationMode(!state.vacationMode),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -162,7 +167,7 @@ class _ProfileTabState extends State<ProfileTab> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.secondary.withOpacity(0.25),
+                            color: AppColors.secondary.withValues(alpha: 0.25),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -174,7 +179,7 @@ class _ProfileTabState extends State<ProfileTab> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.flight_rounded,
@@ -199,7 +204,7 @@ class _ProfileTabState extends State<ProfileTab> {
                             ),
                           ),
                           Icon(
-                            _vacationMode
+                            state.vacationMode
                                 ? Icons.expand_less_rounded
                                 : Icons.expand_more_rounded,
                             color: Colors.white,
@@ -208,7 +213,7 @@ class _ProfileTabState extends State<ProfileTab> {
                       ),
                     ),
                   ),
-                  if (_vacationMode) ...[
+                  if (state.vacationMode) ...[
                     const SizedBox(height: 12),
                     _VacationPanel(),
                   ],
@@ -240,14 +245,16 @@ class _ProfileTabState extends State<ProfileTab> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.06),
+                      color: AppColors.primary.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    await context.read<AppState>().signOutLocal();
+                  },
                   icon: const Icon(Icons.logout_rounded,
                       color: AppColors.destructive),
                   label: const Text(
@@ -274,7 +281,7 @@ class _ProfileTabState extends State<ProfileTab> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.06),
+              color: AppColors.primary.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -358,3 +365,4 @@ class _VacationPanel extends StatelessWidget {
     );
   }
 }
+

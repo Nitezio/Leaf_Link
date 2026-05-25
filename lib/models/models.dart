@@ -5,6 +5,7 @@ class Plant {
   final String name;
   final String species;
   final String image;
+  final String notes;
   String lastWatered;
   String nextWatering;
   PlantHealth health;
@@ -15,6 +16,7 @@ class Plant {
     required this.name,
     required this.species,
     required this.image,
+    this.notes = '',
     required this.lastWatered,
     required this.nextWatering,
     required this.health,
@@ -22,19 +24,53 @@ class Plant {
   });
 
   Plant copyWith({
+    String? name,
+    String? species,
+    String? image,
+    String? notes,
     String? lastWatered,
     String? nextWatering,
     PlantHealth? health,
+    int? level,
   }) {
     return Plant(
       id: id,
-      name: name,
-      species: species,
-      image: image,
-      level: level,
+      name: name ?? this.name,
+      species: species ?? this.species,
+      image: image ?? this.image,
+      notes: notes ?? this.notes,
+      level: level ?? this.level,
       lastWatered: lastWatered ?? this.lastWatered,
       nextWatering: nextWatering ?? this.nextWatering,
       health: health ?? this.health,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'species': species,
+      'image': image,
+      'notes': notes,
+      'lastWatered': lastWatered,
+      'nextWatering': nextWatering,
+      'health': health.index,
+      'level': level,
+    };
+  }
+
+  factory Plant.fromMap(Map<String, dynamic> map) {
+    return Plant(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      species: map['species'] as String,
+      image: map['image'] as String,
+      notes: (map['notes'] as String?) ?? '',
+      lastWatered: map['lastWatered'] as String,
+      nextWatering: map['nextWatering'] as String,
+      health: PlantHealth.values[map['health'] as int],
+      level: map['level'] as int,
     );
   }
 }
