@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../widgets/responsive_body.dart';
 
 class ScanTab extends StatelessWidget {
   const ScanTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      child: Column(
-        children: [
-          const _DiseaseDetection(),
-          const SizedBox(height: 16),
-          const _ARPlantPlacement(),
-          const SizedBox(height: 16),
-          const _GrowthPredictor(),
-        ],
+    return ResponsiveBody(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+        child: Column(
+          children: [
+            const _DiseaseDetection(),
+            const SizedBox(height: 16),
+            const _ARPlantPlacement(),
+            const SizedBox(height: 16),
+            const _GrowthPredictor(),
+          ],
+        ),
       ),
     );
   }
@@ -63,17 +66,21 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
                         color: AppColors.secondary.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.camera_alt_outlined, size: 28, color: AppColors.secondary),
+                      child: const Icon(Icons.camera_alt_outlined,
+                          size: 28, color: AppColors.secondary),
                     ),
                     const SizedBox(height: 12),
                     const Text(
                       'Tap to scan a leaf',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.foreground),
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.foreground),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Point camera at any plant issue',
-                      style: TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.mutedForeground),
                     ),
                   ],
                 ),
@@ -96,9 +103,13 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Plant looks healthy!',
-                            style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.foreground)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.foreground)),
                         Text('No disease detected. Keep up the good care.',
-                            style: TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.mutedForeground)),
                       ],
                     ),
                   ),
@@ -114,7 +125,8 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
                   side: const BorderSide(color: AppColors.border),
                   shape: const StadiumBorder(),
                 ),
-                child: const Text('Scan Again', style: TextStyle(color: AppColors.foreground)),
+                child: const Text('Scan Again',
+                    style: TextStyle(color: AppColors.foreground)),
               ),
             ),
           ],
@@ -160,14 +172,19 @@ class _ARPlantPlacement extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0x336C63FF),
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF6C63FF), width: 2),
+                        border: Border.all(
+                            color: const Color(0xFF6C63FF), width: 2),
                       ),
-                      child: const Icon(Icons.view_in_ar_rounded, color: Colors.white, size: 24),
+                      child: const Icon(Icons.view_in_ar_rounded,
+                          color: Colors.white, size: 24),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       'Preview plants in your space',
-                      style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -238,7 +255,8 @@ class _GrowthPredictor extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(_months[i],
-                        style: const TextStyle(fontSize: 10, color: AppColors.mutedForeground)),
+                        style: const TextStyle(
+                            fontSize: 10, color: AppColors.mutedForeground)),
                   ],
                 );
               }),
