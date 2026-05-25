@@ -7,25 +7,27 @@ class PlantCard extends StatelessWidget {
   final Plant plant;
   final Function(String) onWater;
   final Function(String) onScan;
+  final VoidCallback? onTap;
 
   const PlantCard({
     super.key,
     required this.plant,
     required this.onWater,
     required this.onScan,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cfg = _healthConfig[plant.health]!;
 
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -65,7 +67,7 @@ class PlantCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -92,13 +94,13 @@ class PlantCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.secondary),
+                        const Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.secondary),
                         const SizedBox(width: 3),
                         Text(
                           'Lv.${plant.level}',
@@ -150,7 +152,7 @@ class PlantCard extends StatelessWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.1),
+                        color: AppColors.secondary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.water_drop_outlined, size: 16, color: AppColors.secondary),
@@ -190,7 +192,7 @@ class PlantCard extends StatelessWidget {
                             foregroundColor: Colors.white,
                             shape: const StadiumBorder(),
                             elevation: 2,
-                            shadowColor: AppColors.primary.withOpacity(0.2),
+                            shadowColor: AppColors.primary.withValues(alpha: 0.2),
                           ),
                         ),
                       ),
@@ -209,6 +211,18 @@ class PlantCard extends StatelessWidget {
                         child: const Icon(Icons.camera_alt_outlined, size: 22, color: AppColors.foreground),
                       ),
                     ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: onTap,
+                          style: OutlinedButton.styleFrom(
+                            shape: const StadiumBorder(),
+                            side: const BorderSide(color: AppColors.border),
+                            foregroundColor: AppColors.foreground,
+                          ),
+                          child: const Text('Details'),
+                        ),
+                      ),
                   ],
                 ),
               ],
@@ -217,6 +231,8 @@ class PlantCard extends StatelessWidget {
         ],
       ),
     );
+
+      return GestureDetector(onTap: onTap, child: card);
   }
 
   static const _healthConfig = {
@@ -225,3 +241,4 @@ class PlantCard extends StatelessWidget {
     PlantHealth.warning: {'text': 'Needs Care', 'icon': '💧'},
   };
 }
+

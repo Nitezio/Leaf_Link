@@ -1,0 +1,54 @@
+LeafLink Audit Plan — 2026-05-25
+=================================
+
+Summary (updated 2026-05-25)
+- Completed: analyzer cleanup; Plant CRUD + detail screens; Settings/profile persistence; local auth/session polish; widget tests fixed and green.
+- In scope: make prototype local-first; guard Firestore; keep tests deterministic for CI.
+
+Completed Items
+- Analyzer cleanup: all `flutter analyze` warnings fixed (naming, const/`withOpacity` replacements, etc.).
+- Firestore safety: `FirestoreService` made no-op when Firebase unavailable; guarded app code to avoid core/no-app errors.
+- Plant CRUD: `Add/Edit/Delete/Water` implemented; `Plant` model extended with `notes`, `toMap()`/`fromMap()`; `AppState` persistence wired.
+- Detail screens: `PlantDetailScreen`, `AddEditPlantScreen` implemented and wired.
+- Settings/Profile: persisted via `SharedPreferences` keys; UI and `AppState` methods added (`updateProfile`, `setVacationMode`, etc.).
+- Local auth/session: `authenticateLocal()` and `signOutLocal()` implemented and persisted; `main.dart` root navigator uses `AppState.isLoggedIn`.
+- Tests: `test/widget_test.dart` updated to be deterministic; polling/waits and navigation fixes applied; all widget tests pass locally.
+
+What I did to fix tests
+- Reworked test helpers: pre-authenticate `AppState` in `_pumpApp` for deterministic Home rendering in tests.
+- Replaced fragile `pumpAndSettle` calls with bounded polling where needed to avoid hang on animations/timers.
+- Adjusted test interactions: scrolled to make action buttons visible (`ensureVisible`), tapped GestureDetector ancestors for stat cards, and matched AppBar titles where duplicate text existed.
+- Re-ran tests until green: `test/widget_test.dart` now passes (3/3).
+
+Remaining / Not Completed
+- CI integration: tests pass locally; not yet pushed and validated in CI pipeline.
+- Commit & branch: test fixes and updated files are not yet committed to a dedicated branch (left as next step).
+- Extended unit tests: additional coverage for persistence and edge cases still needed.
+
+On Pause / Put On Hold
+- Firestore integration: Live Firestore features are intentionally guarded and not fully wired — left for later when backend is available.
+- Advanced notification plumbing (local/FCM) — deferred to later phases.
+
+Errors / Issues Encountered
+- Tests initially failed with `core/no-app` Firebase errors — resolved by guarding Firestore and making service no-op when initialization fails.
+- `pumpAndSettle` timeouts due to animations or scheduled timers — replaced with deterministic polling and targeted pumps.
+- Finder flakiness: tappable targets off-screen or non-hit-testable (text inside non-clickable area) — resolved by using `ensureVisible`, tapping ancestor `GestureDetector`, and more specific matcher usage.
+
+Next Recommended Steps
+1) Commit the test fixes and create a branch (e.g. `test/fix-widget-flakiness`) and push for CI validation.
+2) Add a CI job that runs `flutter analyze` and `flutter test` headlessly to prevent regressions.
+3) Expand tests to cover SharedPreferences persistence and sign-out flow.
+4) When ready to re-enable Firestore, add an integration test that runs with an emulated backend or in a gated environment.
+
+Files changed (high level)
+- lib/models/app_state.dart — auth/plants/profile persistence & CRUD
+- lib/services/firestore_service.dart — safe no-op when Firebase not initialized
+- lib/screens/* — added/modified plant screens, settings, profile
+- test/widget_test.dart — deterministic waits and navigation fixes (tests now green)
+
+If you want, I can now:
+- Commit these test fixes to a branch and push them (recommended).
+- Run a full `flutter test` across the repo and/or run `flutter analyze` again.
+- Start adding unit tests for persistence and auth flows.
+
+— Copilot

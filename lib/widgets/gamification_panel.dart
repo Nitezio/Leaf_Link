@@ -27,7 +27,7 @@ class GamificationPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -146,8 +146,8 @@ class GamificationPanel extends StatelessWidget {
                         label: 'Points',
                         value: '$points',
                         gradientColors: [
-                          AppColors.gold.withOpacity(0.1),
-                          AppColors.secondary.withOpacity(0.1),
+                          AppColors.gold.withValues(alpha: 0.1),
+                          AppColors.secondary.withValues(alpha: 0.1),
                         ],
                       ),
                     ),
@@ -159,8 +159,8 @@ class GamificationPanel extends StatelessWidget {
                         label: 'Streak',
                         value: '$streak days',
                         gradientColors: [
-                          AppColors.secondary.withOpacity(0.1),
-                          AppColors.primary.withOpacity(0.1),
+                          AppColors.secondary.withValues(alpha: 0.1),
+                          AppColors.primary.withValues(alpha: 0.1),
                         ],
                       ),
                     ),
@@ -213,7 +213,7 @@ class GamificationPanel extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: gradientColors),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: iconColor.withOpacity(0.2)),
+        border: Border.all(color: iconColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,15 +251,15 @@ class GamificationPanel extends StatelessWidget {
         gradient: badge.unlocked
             ? LinearGradient(
                 colors: [
-                  AppColors.gold.withOpacity(0.2),
-                  AppColors.secondary.withOpacity(0.2),
+                  AppColors.gold.withValues(alpha: 0.2),
+                  AppColors.secondary.withValues(alpha: 0.2),
                 ],
               )
             : null,
         color: badge.unlocked ? null : AppColors.muted,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: badge.unlocked ? AppColors.gold.withOpacity(0.4) : Colors.transparent,
+          color: badge.unlocked ? AppColors.gold.withValues(alpha: 0.4) : Colors.transparent,
           width: 2,
         ),
       ),
@@ -286,3 +286,4 @@ class GamificationPanel extends StatelessWidget {
     );
   }
 }
+

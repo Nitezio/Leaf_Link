@@ -95,7 +95,7 @@ class _BottomNav extends StatelessWidget {
                               : AppColors.primary,
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.25),
+                              color: AppColors.primary.withValues(alpha: 0.25),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -129,7 +129,7 @@ class _BottomNav extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.secondary.withOpacity(0.1)
+              ? AppColors.secondary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
@@ -156,3 +156,4 @@ class _BottomNav extends StatelessWidget {
     );
   }
 }
+

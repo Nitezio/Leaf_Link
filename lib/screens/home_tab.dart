@@ -5,6 +5,8 @@ import '../theme/app_theme.dart';
 import '../widgets/plant_card.dart';
 import '../widgets/weather_panel.dart';
 import '../widgets/responsive_body.dart';
+import 'garden_tab.dart';
+import 'plant_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
   final VoidCallback onGoToScan;
@@ -37,7 +39,7 @@ class HomeTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.15),
+                          color: AppColors.primary.withValues(alpha: 0.15),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -93,14 +95,27 @@ class HomeTab extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                      child: _statCard('${state.plants.length}', 'Plants')),
+                    child: _statCard(
+                      '${state.plants.length}',
+                      'Plants',
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const GardenTab(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
-                      child:
-                          _statCard('${state.userStats.streak}', 'Day Streak')),
+                    child: _statCard('${state.userStats.streak}', 'Day Streak'),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
-                      child: _statCard('${state.userStats.level}', 'Level')),
+                    child: _statCard('${state.userStats.level}', 'Level'),
+                  ),
                 ],
               ),
             ),
@@ -142,6 +157,14 @@ class HomeTab extends StatelessWidget {
                       );
                     },
                     onScan: (_) => onGoToScan(),
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PlantDetailScreen(plantId: plant.id),
+                        ),
+                      );
+                    },
                   ),
                 )),
 
@@ -200,15 +223,15 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  static Widget _statCard(String value, String label) {
-    return Container(
+  static Widget _statCard(String value, String label, {VoidCallback? onTap}) {
+    final card = Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
+            color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -229,6 +252,8 @@ class HomeTab extends StatelessWidget {
         ],
       ),
     );
+    if (onTap == null) return card;
+    return GestureDetector(onTap: onTap, child: card);
   }
 
   static Widget _quickAction({
@@ -246,7 +271,7 @@ class HomeTab extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.06),
+              color: AppColors.primary.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -259,7 +284,7 @@ class HomeTab extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.1),
+                color: AppColors.secondary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: AppColors.secondary, size: 22),
@@ -281,3 +306,4 @@ class HomeTab extends StatelessWidget {
     );
   }
 }
+

@@ -410,7 +410,7 @@ class _PostCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.06),
+            color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -614,3 +614,4 @@ class _CommentTile extends StatelessWidget {
     );
   }
 }
+

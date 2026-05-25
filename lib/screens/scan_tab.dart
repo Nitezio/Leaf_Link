@@ -82,7 +82,7 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
                   color: AppColors.muted,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.secondary.withOpacity(0.3),
+                    color: AppColors.secondary.withValues(alpha: 0.3),
                     width: 2,
                     strokeAlign: BorderSide.strokeAlignOutside,
                   ),
@@ -94,7 +94,7 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.1),
+                        color: AppColors.secondary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.camera_alt_outlined,
@@ -121,9 +121,9 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFF52B788).withOpacity(0.1),
+                color: const Color(0xFF52B788).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+                border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
@@ -295,7 +295,7 @@ class _GrowthPredictor extends StatelessWidget {
                       width: 40,
                       height: 80 * _heights[i],
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
+                        gradient: const LinearGradient(
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [AppColors.secondary, AppColors.chart3],
@@ -316,7 +316,7 @@ class _GrowthPredictor extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.secondary.withOpacity(0.08),
+              color: AppColors.secondary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Row(
@@ -350,7 +350,7 @@ Widget _featureCard({
       borderRadius: BorderRadius.circular(24),
       boxShadow: [
         BoxShadow(
-          color: AppColors.primary.withOpacity(0.08),
+          color: AppColors.primary.withValues(alpha: 0.08),
           blurRadius: 8,
           offset: const Offset(0, 2),
         ),
@@ -557,7 +557,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.07)
+      ..color = Colors.white.withValues(alpha: 0.07)
       ..strokeWidth = 1;
     const step = 30.0;
     for (double x = 0; x < size.width; x += step) {
@@ -571,3 +571,4 @@ class _GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

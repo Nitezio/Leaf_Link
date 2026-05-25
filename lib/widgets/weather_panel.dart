@@ -25,7 +25,7 @@ class WeatherPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF52B788).withOpacity(0.25),
+            color: const Color(0xFF52B788).withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -34,12 +34,12 @@ class WeatherPanel extends StatelessWidget {
       child: Column(
         children: [
           // Top row
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text('Local Weather',
                       style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 13)),
                   SizedBox(height: 4),
@@ -67,7 +67,7 @@ class WeatherPanel extends StatelessWidget {
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: const [
+                children: [
                   Row(
                     children: [
                       Icon(Icons.water_drop, color: Colors.white, size: 16),
@@ -106,7 +106,7 @@ class WeatherPanel extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -125,9 +125,9 @@ class WeatherPanel extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
             child: const Row(
               children: [
@@ -147,3 +147,4 @@ class WeatherPanel extends StatelessWidget {
     );
   }
 }
+
