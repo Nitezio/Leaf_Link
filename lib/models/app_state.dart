@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/firestore_service.dart';
+import '../services/persistence_service.dart';
+import '../services/app_logger.dart';
 import 'models.dart';
 
 class AppState extends ChangeNotifier {
@@ -130,6 +131,7 @@ class AppState extends ChangeNotifier {
   String profileEmoji = '🌿';
   bool vacationMode = false;
   bool notificationsEnabled = true;
+  bool isDarkMode = false;
   bool isLoggedIn = false;
   bool justSignedOut = false;
   String? sessionEmail;
@@ -200,8 +202,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _loadPlants() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_plantsPrefsKey);
+      final raw = await PersistenceService.instance.getString(_plantsPrefsKey);
       if (raw == null || raw.isEmpty) {
         await _savePlants();
         return;
@@ -214,52 +215,58 @@ class AppState extends ChangeNotifier {
         ..clear()
         ..addAll(loadedPlants);
       notifyListeners();
-    } catch (_) {
+    } catch (e, st) {
+      logger.e('Failed to load plants', e, st);
       await _savePlants();
     }
   }
 
   Future<void> _savePlants() async {
-    final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode(plants.map((p) => p.toMap()).toList());
-    await prefs.setString(_plantsPrefsKey, payload);
+    await PersistenceService.instance.setString(_plantsPrefsKey, payload);
   }
 
   Future<void> _loadProfileSettings() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_profilePrefsKey);
+      final raw = await PersistenceService.instance.getString(_profilePrefsKey);
       if (raw == null || raw.isEmpty) {
         await _saveProfileSettings();
         return;
       }
       final map = jsonDecode(raw) as Map<String, dynamic>;
-      profileName = (map['profileName'] as String?) ?? profileName;
-      profileEmoji = (map['profileEmoji'] as String?) ?? profileEmoji;
-      vacationMode = (map['vacationMode'] as bool?) ?? vacationMode;
-      notificationsEnabled =
+        profileName = (map['profileName'] as String?) ?? profileName;
+        profileEmoji = (map['profileEmoji'] as String?) ?? profileEmoji;
+        vacationMode = (map['vacationMode'] as bool?) ?? vacationMode;
+        notificationsEnabled =
           (map['notificationsEnabled'] as bool?) ?? notificationsEnabled;
+        isDarkMode = (map['isDarkMode'] as bool?) ?? isDarkMode;
       notifyListeners();
-    } catch (_) {
+    } catch (e, st) {
+      logger.e('Failed to load profile settings', e, st);
       await _saveProfileSettings();
     }
   }
 
   Future<void> _saveProfileSettings() async {
-    final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode({
       'profileName': profileName,
       'profileEmoji': profileEmoji,
       'vacationMode': vacationMode,
       'notificationsEnabled': notificationsEnabled,
+      'isDarkMode': isDarkMode,
     });
-    await prefs.setString(_profilePrefsKey, payload);
+    await PersistenceService.instance.setString(_profilePrefsKey, payload);
+  }
+
+  void setDarkMode(bool value) {
+    isDarkMode = value;
+    _saveProfileSettings();
+    notifyListeners();
   }
 
   Future<void> _loadAuthSession() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_authPrefsKey);
+      final raw = await PersistenceService.instance.getString(_authPrefsKey);
       if (raw == null || raw.isEmpty) {
         await _saveAuthSession();
         return;
@@ -268,18 +275,18 @@ class AppState extends ChangeNotifier {
       isLoggedIn = (map['isLoggedIn'] as bool?) ?? false;
       sessionEmail = map['sessionEmail'] as String?;
       notifyListeners();
-    } catch (_) {
+    } catch (e, st) {
+      logger.e('Failed to load auth session', e, st);
       await _saveAuthSession();
     }
   }
 
   Future<void> _saveAuthSession() async {
-    final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode({
       'isLoggedIn': isLoggedIn,
       'sessionEmail': sessionEmail,
     });
-    await prefs.setString(_authPrefsKey, payload);
+    await PersistenceService.instance.setString(_authPrefsKey, payload);
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
@@ -471,8 +478,7 @@ class AppState extends ChangeNotifier {
       // If Firestore isn't available or network fails, continue to local load.
     }
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_communityPrefsKey);
+      final raw = await PersistenceService.instance.getString(_communityPrefsKey);
       if (raw == null || raw.isEmpty) {
         _communityLoaded = true;
         await _saveCommunityPosts();
@@ -488,7 +494,8 @@ class AppState extends ChangeNotifier {
         ..addAll(posts);
       _communityLoaded = true;
       notifyListeners();
-    } catch (_) {
+    } catch (e, st) {
+      logger.e('Failed to load community posts', e, st);
       _communityPosts
         ..clear()
         ..addAll(_seedCommunityPosts());
@@ -515,9 +522,8 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _saveCommunityPosts() async {
-    final prefs = await SharedPreferences.getInstance();
     final payload = jsonEncode(_communityPosts.map((p) => p.toMap()).toList());
-    await prefs.setString(_communityPrefsKey, payload);
+    await PersistenceService.instance.setString(_communityPrefsKey, payload);
     // Also attempt to save newest posts to Firestore (best-effort).
     try {
       for (final p in _communityPosts) {
@@ -531,15 +537,14 @@ class AppState extends ChangeNotifier {
   /// Migrate locally stored community posts to Firestore. Idempotent.
   Future<void> migrateLocalPostsToFirestore() async {
     if (!_firestore.isAvailable) return;
-    final prefs = await SharedPreferences.getInstance();
-    final migrated = prefs.getBool('community_migrated_v1') ?? false;
-    if (migrated) return;
-    final raw = prefs.getString(_communityPrefsKey);
-    if (raw == null || raw.isEmpty) {
-      await prefs.setBool('community_migrated_v1', true);
-      return;
-    }
     try {
+      final migrated = await PersistenceService.instance.getBool('community_migrated_v1') ?? false;
+      if (migrated) return;
+      final raw = await PersistenceService.instance.getString(_communityPrefsKey);
+      if (raw == null || raw.isEmpty) {
+        await PersistenceService.instance.setBool('community_migrated_v1', true);
+        return;
+      }
       final decoded = jsonDecode(raw) as List<dynamic>;
       final posts = decoded
           .map((p) => CommunityPost.fromMap(Map<String, dynamic>.from(p as Map)))
@@ -547,12 +552,13 @@ class AppState extends ChangeNotifier {
       for (final post in posts) {
         try {
           await _firestore.setPost(post.id, post.toMap());
-        } catch (_) {
-          // ignore per-post failures
+        } catch (e, st) {
+          logger.w('Per-post migration failed for ${post.id}', e, st);
         }
       }
-      await prefs.setBool('community_migrated_v1', true);
-    } catch (_) {
+      await PersistenceService.instance.setBool('community_migrated_v1', true);
+    } catch (e, st) {
+      logger.e('Migration to Firestore failed', e, st);
       // migration failed, keep flag false for retry
     }
   }

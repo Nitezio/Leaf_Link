@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'app_logger.dart';
 
 /// Minimal Firestore adapter used by Phase 1 scaffolding.
 class FirestoreService {
@@ -12,12 +13,22 @@ class FirestoreService {
 
   Future<void> addPost(Map<String, dynamic> post) async {
     if (!isAvailable) return;
-    await postsCollection().add(post);
+    try {
+      await postsCollection().add(post);
+    } catch (e, st) {
+      logger.e('Failed to add post to Firestore', e, st);
+      rethrow;
+    }
   }
 
   Future<void> setPost(String id, Map<String, dynamic> post) async {
     if (!isAvailable) return;
-    await postsCollection().doc(id).set(post);
+    try {
+      await postsCollection().doc(id).set(post);
+    } catch (e, st) {
+      logger.e('Failed to set post in Firestore', e, st);
+      rethrow;
+    }
   }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> watchPosts() {
