@@ -1,87 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import '../core/theme/app_colors.dart';
+import 'package:provider/provider.dart';
+import '../models/app_state.dart';
+import '../theme/app_theme.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.foreground,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.foreground),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text('Settings', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        title: const Text('Settings'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _buildSectionHeader('Preferences'),
-          _buildSwitchTile('Push Notifications', true),
-          _buildSwitchTile('Watering Reminders', true),
-          _buildSwitchTile('Dark Mode', false), // Since it's light themed mostly right now
-          const SizedBox(height: 24),
-          _buildSectionHeader('Account'),
-          _buildListTile('Edit Profile', LucideIcons.user),
-          _buildListTile('Privacy Security', LucideIcons.shield),
-          _buildListTile('Data Export', LucideIcons.download),
-          const SizedBox(height: 24),
-          _buildSectionHeader('Support'),
-          _buildListTile('Help Center', LucideIcons.helpCircle),
-          _buildListTile('About PlantCare Pro', LucideIcons.info),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.destructive.withValues(alpha: 0.1),
-              foregroundColor: AppColors.destructive,
-              elevation: 0,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _card(
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(
+                  backgroundColor: AppColors.secondary,
+                  child: Text(state.profileEmoji),
+                ),
+                title: Text(state.profileName,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Local profile stored on this device'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EditProfileScreen(),
+                    ),
+                  );
+                },
+              ),
             ),
-            child: const Text('Log Out'),
-          ),
-          const SizedBox(height: 32),
-        ],
+            const SizedBox(height: 12),
+            _card(
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Vacation mode'),
+                    subtitle: const Text('Pause reminders while you are away'),
+                    value: state.vacationMode,
+                    onChanged: state.setVacationMode,
+                  ),
+                  const Divider(height: 1),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Notifications'),
+                    subtitle: const Text('Keep gentle reminder alerts on'),
+                    value: state.notificationsEnabled,
+                    onChanged: state.setNotificationsEnabled,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            _card(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Prototype status',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.vacationMode
+                        ? 'Vacation mode is enabled. Plant reminders are softened.'
+                        : 'Vacation mode is off. Care reminders stay active.',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title.toUpperCase(),
-        style: const TextStyle(color: AppColors.mutedForeground, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1),
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile(String title, bool value) {
+  Widget _card({required Widget child}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12)),
-      child: SwitchListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-        value: value,
-        onChanged: (v) {},
-        activeThumbColor: AppColors.primary,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
       ),
-    );
-  }
-
-  Widget _buildListTile(String title, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.mutedForeground),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-        trailing: const Icon(LucideIcons.chevronRight, color: AppColors.mutedForeground),
-        onTap: () {},
-      ),
+      child: child,
     );
   }
 }

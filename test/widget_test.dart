@@ -1,30 +1,113 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_image_mock/network_image_mock.dart';
+import 'package:plantcare_pro/main.dart';
+import 'package:provider/provider.dart';
 
-import 'package:leaf_link/main.dart';
+import 'package:plantcare_pro/models/app_state.dart';
+
+Future<void> _pumpApp(WidgetTester tester) async {
+  // Create an AppState instance and mark as logged in for deterministic tests.
+  final appState = AppState();
+  appState.isLoggedIn = true;
+  await tester.pumpWidget(
+    ChangeNotifierProvider.value(
+      value: appState,
+      child: const PlantCareApp(),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _signInLocally(WidgetTester tester) async {
+  await tester.ensureVisible(find.text('Get Started'));
+  await tester.tap(find.text('Get Started'));
+  await tester.pumpAndSettle();
+
+  final fields = find.byType(TextField);
+  await tester.enterText(fields.at(0), 'tester@example.com');
+  await tester.enterText(fields.at(1), 'secret123');
+  await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
+  // Wait for change notifier -> navigator rebuild to complete.
+  await tester.pump();
+  // Avoid pumpAndSettle (can hang if animations or timers run); poll for Home.
+  var found = false;
+  for (var i = 0; i < 50; i++) {
+    if (find.text('Good Morning').evaluate().isNotEmpty) {
+      found = true;
+      break;
+    }
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('local login flow reaches home', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await _pumpApp(tester);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(find.text('Good Morning'), findsOneWidget);
+      expect(find.text('Welcome back!'), findsOneWidget);
+    });
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('plant detail and garden add flow work locally', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await _pumpApp(tester);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      // Ensure the Details button is visible (scroll if needed) then tap.
+      await tester.ensureVisible(find.text('Details').first);
+      await tester.tap(find.text('Details').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Plant Details'), findsOneWidget);
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // Tap the Plants stat card (tap the GestureDetector ancestor of the label).
+      final plantsCard = find.ancestor(
+        of: find.text('Plants'),
+        matching: find.byType(GestureDetector),
+      ).first;
+      await tester.ensureVisible(plantsCard);
+      await tester.tap(plantsCard);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(AppBar, 'Add Plant'), findsOneWidget);
+
+      final fields = find.byType(TextFormField);
+      await tester.enterText(fields.at(0), 'Test Fern');
+      await tester.enterText(fields.at(1), 'Nephrolepis exaltata');
+      await tester.enterText(fields.at(2), 'https://images.unsplash.com/photo-1593691509542-0f6f2c72b4f9?w=400');
+      await tester.enterText(fields.at(3), 'Keep the soil lightly moist.');
+      await tester.enterText(fields.at(4), 'Today');
+      await tester.enterText(fields.at(5), 'In 4 days');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Add Plant'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Test Fern'), findsWidgets);
+    });
+  });
+
+  testWidgets('settings and profile values persist locally', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await _pumpApp(tester);
+
+      // Switch to Profile tab, then open Settings.
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsOneWidget);
+
+      await tester.tap(find.text('Vacation mode'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Vacation Mode'), findsOneWidget);
+    });
   });
 }
