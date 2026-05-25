@@ -54,19 +54,27 @@ class _RootNavigator extends StatefulWidget {
 class _RootNavigatorState extends State<_RootNavigator> {
   bool _showLogin = false;
 
+  void _startLoginFlow() {
+    context.read<AppState>().prepareLoginFlow();
+    setState(() {
+      _showLogin = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     if (state.isLoggedIn) {
       return const HomeScreen();
     }
+    if (state.justSignedOut) {
+      return WelcomeScreen(onGetStarted: _startLoginFlow);
+    }
     if (_showLogin) {
       return const LoginScreen();
     }
     return WelcomeScreen(
-      onGetStarted: () => setState(() {
-        _showLogin = true;
-      }),
+      onGetStarted: _startLoginFlow,
     );
   }
 }

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'package:plantcare_pro/main.dart';
+import 'package:plantcare_pro/models/models.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:plantcare_pro/models/app_state.dart';
 
@@ -17,28 +20,6 @@ Future<void> _pumpApp(WidgetTester tester) async {
     ),
   );
   await tester.pumpAndSettle();
-}
-
-Future<void> _signInLocally(WidgetTester tester) async {
-  await tester.ensureVisible(find.text('Get Started'));
-  await tester.tap(find.text('Get Started'));
-  await tester.pumpAndSettle();
-
-  final fields = find.byType(TextField);
-  await tester.enterText(fields.at(0), 'tester@example.com');
-  await tester.enterText(fields.at(1), 'secret123');
-  await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
-  // Wait for change notifier -> navigator rebuild to complete.
-  await tester.pump();
-  // Avoid pumpAndSettle (can hang if animations or timers run); poll for Home.
-  var found = false;
-  for (var i = 0; i < 50; i++) {
-    if (find.text('Good Morning').evaluate().isNotEmpty) {
-      found = true;
-      break;
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
 }
 
 void main() {
@@ -91,6 +72,28 @@ void main() {
     });
   });
 
+  testWidgets('invalid plant input shows validation errors', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await _pumpApp(tester);
+
+      final plantsCard = find.ancestor(
+        of: find.text('Plants'),
+        matching: find.byType(GestureDetector),
+      ).first;
+      await tester.ensureVisible(plantsCard);
+      await tester.tap(plantsCard);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.add_rounded));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Add Plant'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Required'), findsWidgets);
+    });
+  });
+
   testWidgets('settings and profile values persist locally', (WidgetTester tester) async {
     await mockNetworkImagesFor(() async {
       await _pumpApp(tester);
@@ -109,5 +112,61 @@ void main() {
 
       expect(find.text('Vacation Mode'), findsOneWidget);
     });
+  });
+
+  testWidgets('sign out returns to welcome screen', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await _pumpApp(tester);
+
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      final signOutButton = find.widgetWithText(TextButton, 'Sign Out');
+      await tester.ensureVisible(signOutButton);
+      await tester.tap(signOutButton);
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ElevatedButton, 'Get Started'), findsOneWidget);
+      expect(find.text('Sign In'), findsNothing);
+    });
+  });
+
+  testWidgets('local persistence reloads profile and plants', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({
+      'profile_v1': jsonEncode({
+        'profileName': 'Ada Leaf',
+        'profileEmoji': '🪴',
+        'vacationMode': true,
+        'notificationsEnabled': false,
+      }),
+      'plants_v1': jsonEncode([
+        {
+          'id': 'plant-42',
+          'name': 'Test Fern',
+          'species': 'Nephrolepis exaltata',
+          'image': 'https://example.com/fern.png',
+          'notes': 'Keep moist',
+          'lastWatered': 'Today',
+          'nextWatering': 'In 3 days',
+          'health': PlantHealth.good.index,
+          'level': 2,
+        }
+      ]),
+    });
+
+    final restoredState = AppState();
+    for (var i = 0; i < 20; i++) {
+      if (restoredState.profileName == 'Ada Leaf' &&
+          restoredState.profileEmoji == '🪴' &&
+          restoredState.getPlant('plant-42') != null) {
+        break;
+      }
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+
+    expect(restoredState.profileName, 'Ada Leaf');
+    expect(restoredState.profileEmoji, '🪴');
+    expect(restoredState.vacationMode, isTrue);
+    expect(restoredState.notificationsEnabled, isFalse);
+    expect(restoredState.getPlant('plant-42')?.name, 'Test Fern');
   });
 }

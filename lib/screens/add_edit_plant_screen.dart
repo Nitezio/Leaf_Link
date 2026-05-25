@@ -109,7 +109,7 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<PlantHealth>(
-                        value: _health,
+                        initialValue: _health,
                         decoration: _inputDecoration('Health'),
                         items: PlantHealth.values
                             .map((health) => DropdownMenuItem(

@@ -43,6 +43,8 @@ class PlantDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
+                final appState = context.read<AppState>();
+                final navigator = Navigator.of(context);
               final deleted = await showDialog<bool>(
                 context: context,
                 builder: (_) => AlertDialog(
@@ -61,8 +63,8 @@ class PlantDetailScreen extends StatelessWidget {
                 ),
               );
               if (deleted == true) {
-                context.read<AppState>().deletePlant(plantId);
-                if (context.mounted) Navigator.pop(context);
+                  appState.deletePlant(plantId);
+                  navigator.pop();
               }
             },
             icon: const Icon(Icons.delete_outline),
