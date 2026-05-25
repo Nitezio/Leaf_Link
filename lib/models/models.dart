@@ -161,3 +161,50 @@ class CommunityPost {
     );
   }
 }
+
+class MarketplaceItem {
+  final String id;
+  final String name;
+  final String price;
+  final String rating;
+  final String seller;
+  final String emoji;
+  final String? badge;
+  final String description;
+  final int stock;
+
+  const MarketplaceItem({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.rating,
+    required this.seller,
+    required this.emoji,
+    required this.description,
+    required this.stock,
+    this.badge,
+  });
+}
+
+class CartItem {
+  final MarketplaceItem item;
+  int quantity;
+
+  CartItem({required this.item, required this.quantity});
+}
+
+class ScanResult {
+  final String title;
+  final String subtitle;
+  final String emoji;
+  final ColorTag colorTag;
+
+  const ScanResult({
+    required this.title,
+    required this.subtitle,
+    required this.emoji,
+    required this.colorTag,
+  });
+}
+
+enum ColorTag { good, warning, neutral }

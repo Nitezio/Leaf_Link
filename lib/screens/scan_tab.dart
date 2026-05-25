@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
+import '../models/models.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_body.dart';
 
-class ScanTab extends StatelessWidget {
+class ScanTab extends StatefulWidget {
   const ScanTab({super.key});
+
+  @override
+  State<ScanTab> createState() => _ScanTabState();
+}
+
+class _ScanTabState extends State<ScanTab> {
+  final List<ScanResult> _recentScans = [];
+
+  void _addScan(ScanResult result) {
+    setState(() {
+      _recentScans.insert(0, result);
+      if (_recentScans.length > 4) {
+        _recentScans.removeLast();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +29,13 @@ class ScanTab extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
         child: Column(
           children: [
-            const _DiseaseDetection(),
+            _DiseaseDetection(onScanComplete: _addScan),
             const SizedBox(height: 16),
-            const _ARPlantPlacement(),
+            _ARPlantPlacement(onLaunchAr: _addScan),
             const SizedBox(height: 16),
             const _GrowthPredictor(),
+            const SizedBox(height: 16),
+            _RecentScansCard(recentScans: _recentScans),
           ],
         ),
       ),
@@ -25,7 +44,9 @@ class ScanTab extends StatelessWidget {
 }
 
 class _DiseaseDetection extends StatefulWidget {
-  const _DiseaseDetection();
+  final ValueChanged<ScanResult> onScanComplete;
+
+  const _DiseaseDetection({required this.onScanComplete});
 
   @override
   State<_DiseaseDetection> createState() => _DiseaseDetectionState();
@@ -44,7 +65,17 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
         children: [
           if (!_scanned) ...[
             GestureDetector(
-              onTap: () => setState(() => _scanned = true),
+              onTap: () {
+                setState(() => _scanned = true);
+                widget.onScanComplete(
+                  const ScanResult(
+                    title: 'Healthy leaf detected',
+                    subtitle: 'No disease detected. Keep the current watering rhythm.',
+                    emoji: '✅',
+                    colorTag: ColorTag.good,
+                  ),
+                );
+              },
               child: Container(
                 height: 160,
                 decoration: BoxDecoration(
@@ -137,7 +168,9 @@ class _DiseaseDetectionState extends State<_DiseaseDetection> {
 }
 
 class _ARPlantPlacement extends StatelessWidget {
-  const _ARPlantPlacement();
+  final ValueChanged<ScanResult> onLaunchAr;
+
+  const _ARPlantPlacement({required this.onLaunchAr});
 
   @override
   Widget build(BuildContext context) {
@@ -196,7 +229,24 @@ class _ARPlantPlacement extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                onLaunchAr(
+                  const ScanResult(
+                    title: 'AR placement ready',
+                    subtitle: 'Previewed a 1.2m plant footprint in your room.',
+                    emoji: '🪴',
+                    colorTag: ColorTag.neutral,
+                  ),
+                );
+                showModalBottomSheet<void>(
+                  context: context,
+                  backgroundColor: AppColors.background,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  builder: (_) => const _ArPreviewSheet(),
+                );
+              },
               icon: const Icon(Icons.camera_alt_outlined, size: 18),
               label: const Text('Launch AR Camera'),
               style: ElevatedButton.styleFrom(
@@ -333,6 +383,174 @@ Widget _featureCard({
       ],
     ),
   );
+}
+
+class _RecentScansCard extends StatelessWidget {
+  final List<ScanResult> recentScans;
+
+  const _RecentScansCard({required this.recentScans});
+
+  @override
+  Widget build(BuildContext context) {
+    return _featureCard(
+      headerGradient: const [Color(0xFF2A9D8F), Color(0xFF52B788)],
+      headerIcon: Icons.history_rounded,
+      headerTitle: 'Recent Scan Activity',
+      child: recentScans.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'Your scan results will appear here after you tap the scan or AR actions.',
+                style: TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+              ),
+            )
+          : Column(
+              children: recentScans
+                  .map((scan) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _ScanHistoryTile(scan: scan),
+                      ))
+                  .toList(),
+            ),
+    );
+  }
+}
+
+class _ScanHistoryTile extends StatelessWidget {
+  final ScanResult scan;
+
+  const _ScanHistoryTile({required this.scan});
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = switch (scan.colorTag) {
+      ColorTag.good => const Color(0xFFE8F6EF),
+      ColorTag.warning => const Color(0xFFFFF4E6),
+      ColorTag.neutral => const Color(0xFFE9ECFF),
+    };
+    final textColor = switch (scan.colorTag) {
+      ColorTag.good => AppColors.secondary,
+      ColorTag.warning => const Color(0xFFB5651D),
+      ColorTag.neutral => const Color(0xFF6C63FF),
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(scan.emoji, style: const TextStyle(fontSize: 20)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(scan.title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.foreground)),
+                const SizedBox(height: 2),
+                Text(scan.subtitle,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.mutedForeground)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            scan.colorTag == ColorTag.good ? 'Good' : scan.colorTag == ColorTag.warning ? 'Warning' : 'Demo',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArPreviewSheet extends StatelessWidget {
+  const _ArPreviewSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'AR Placement Preview',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.foreground,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 180,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF101820), Color(0xFF1F2A44)],
+                ),
+              ),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.view_in_ar_rounded, color: Colors.white, size: 44),
+                    SizedBox(height: 10),
+                    Text(
+                      'Move your device to place the plant',
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Demo mode only in the prototype',
+                      style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C63FF),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                ),
+                child: const Text('Done'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _GridPainter extends CustomPainter {

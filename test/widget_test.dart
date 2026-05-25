@@ -7,24 +7,68 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:network_image_mock/network_image_mock.dart';
 
-import 'package:leaf_link/main.dart';
+import 'package:plantcare_pro/main.dart';
+import 'package:provider/provider.dart';
+import 'package:plantcare_pro/models/app_state.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Welcome to login to home flow', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(ChangeNotifierProvider(
+        create: (_) => AppState(),
+        child: const PlantCareApp(),
+      ));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(find.text('Get Started'), findsOneWidget);
+      await tester.ensureVisible(find.text('Get Started'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Get Started'));
+      await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(find.text('Welcome Back'), findsOneWidget);
+      final signInButton = find.widgetWithText(ElevatedButton, 'Sign In');
+      await tester.ensureVisible(signInButton);
+      await tester.pumpAndSettle();
+      await tester.tap(signInButton);
+      await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(find.text('Good Morning'), findsOneWidget);
+    });
+  });
+
+  testWidgets('Bottom nav switches tabs', (WidgetTester tester) async {
+    await mockNetworkImagesFor(() async {
+      await tester.pumpWidget(ChangeNotifierProvider(
+        create: (_) => AppState(),
+        child: const PlantCareApp(),
+      ));
+      await tester.ensureVisible(find.text('Get Started'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Get Started'));
+      await tester.pumpAndSettle();
+      final signInButton = find.widgetWithText(ElevatedButton, 'Sign In');
+      await tester.ensureVisible(signInButton);
+      await tester.pumpAndSettle();
+      await tester.tap(signInButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Community'));
+      await tester.pumpAndSettle();
+      expect(find.text('Posting as You'), findsOneWidget);
+
+      await tester.tap(find.text('Market'));
+      await tester.pumpAndSettle();
+      expect(find.text('Marketplace'), findsOneWidget);
+
+      await tester.tap(find.text('Profile'));
+      await tester.pumpAndSettle();
+      expect(find.text('Plant Parent'), findsOneWidget);
+
+      await tester.tap(find.text('Home'));
+      await tester.pumpAndSettle();
+      expect(find.text('Good Morning'), findsOneWidget);
+    });
   });
 }

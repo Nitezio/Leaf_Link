@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'home_tab.dart';
-import 'garden_tab.dart';
 import 'scan_tab.dart';
 import 'community_tab.dart';
 import 'marketplace_tab.dart';
@@ -16,30 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _activeTab = 0; // 0=home, 1=community, 2=scan, 3=marketplace, 4=profile
-
-  static const _navItems = [
-    {
-      'icon': Icons.home_outlined,
-      'activeIcon': Icons.home_rounded,
-      'label': 'Home'
-    },
-    {
-      'icon': Icons.group_outlined,
-      'activeIcon': Icons.group_rounded,
-      'label': 'Community'
-    },
-    // FAB placeholder index 2
-    {
-      'icon': Icons.shopping_bag_outlined,
-      'activeIcon': Icons.shopping_bag_rounded,
-      'label': 'Marketplace'
-    },
-    {
-      'icon': Icons.person_outline_rounded,
-      'activeIcon': Icons.person_rounded,
-      'label': 'Profile'
-    },
-  ];
 
   Widget _buildTab() {
     switch (_activeTab) {
