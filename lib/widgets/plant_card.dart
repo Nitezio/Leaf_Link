@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:lucide_icons/lucide_icons.dart';
-import '../models/plant.dart';
-import '../core/theme/app_colors.dart';
+import 'package:flutter/material.dart';
+import '../models/models.dart';
+import '../theme/app_theme.dart';
 
 class PlantCard extends StatelessWidget {
   final Plant plant;
-  final VoidCallback onWater;
-  final VoidCallback onScan;
+  final Function(String) onWater;
+  final Function(String) onScan;
 
   const PlantCard({
     super.key,
@@ -18,13 +17,24 @@ class PlantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
+    final cfg = _healthConfig[plant.health]!;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.hardEdge,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Hero Image with overlays
+          // Hero image
           SizedBox(
             height: 160,
             child: Stack(
@@ -33,48 +43,94 @@ class PlantCard extends StatelessWidget {
                 CachedNetworkImage(
                   imageUrl: plant.image,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: AppColors.muted),
-                  errorWidget: (context, url, error) => Container(color: AppColors.muted, child: const Icon(Icons.error)),
+                  placeholder: (_, __) => Container(color: AppColors.chart4),
+                  errorWidget: (_, __, ___) =>
+                      Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 48, color: Colors.white)),
                 ),
-                // Gradient overlay
+                // Gradient
                 Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.1),
-                        Colors.black.withValues(alpha: 0.6),
+                      colors: [Colors.transparent, Color(0x33000000), Color(0x99000000)],
+                      stops: [0.0, 0.4, 1.0],
+                    ),
+                  ),
+                ),
+                // Health badge (top left)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(cfg['icon']!, style: const TextStyle(fontSize: 13)),
+                        const SizedBox(width: 4),
+                        Text(
+                          cfg['text']!,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.foreground,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
-                // Health Badge
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _buildHealthBadge(),
-                ),
-                // Level Badge
+                // Level badge (top right)
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: _buildLevelBadge(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.secondary),
+                        const SizedBox(width: 3),
+                        Text(
+                          'Lv.${plant.level}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                // Name Overlay
+                // Plant name
                 Positioned(
                   bottom: 12,
                   left: 12,
+                  right: 12,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         plant.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         plant.species,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+                        style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 12),
                       ),
                     ],
                   ),
@@ -82,64 +138,78 @@ class PlantCard extends StatelessWidget {
               ],
             ),
           ),
-          // Info and Actions
+
+          // Card body
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               children: [
-                // Next Watering Info
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(LucideIcons.droplets, color: AppColors.secondary, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Next watering',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.mutedForeground),
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withOpacity(0.1),
+                        shape: BoxShape.circle,
                       ),
-                      Text(
-                        plant.nextWatering,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onWater,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(0, 48),
+                      child: const Icon(Icons.water_drop_outlined, size: 16, color: AppColors.secondary),
                     ),
-                    child: const Text('Water Now'),
-                  ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Next watering',
+                          style: TextStyle(fontSize: 11, color: AppColors.mutedForeground),
+                        ),
+                        Text(
+                          plant.nextWatering,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(LucideIcons.camera, color: AppColors.primary),
-                    onPressed: onScan,
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () => onWater(plant.id),
+                          icon: const Icon(Icons.water_drop_outlined, size: 18),
+                          label: const Text('Water Now'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: const StadiumBorder(),
+                            elevation: 2,
+                            shadowColor: AppColors.primary.withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => onScan(plant.id),
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border, width: 2),
+                        ),
+                        child: const Icon(Icons.camera_alt_outlined, size: 22, color: AppColors.foreground),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -149,76 +219,9 @@ class PlantCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHealthBadge() {
-    Color bgColor;
-    String label;
-    String emoji;
-
-    switch (plant.health) {
-      case PlantHealth.excellent:
-        bgColor = AppColors.healthExcellent;
-        label = 'Thriving';
-        emoji = '✨';
-        break;
-      case PlantHealth.good:
-        bgColor = AppColors.healthGood;
-        label = 'Healthy';
-        emoji = '🌿';
-        break;
-      case PlantHealth.warning:
-        bgColor = AppColors.healthWarning;
-        label = 'Needs Care';
-        emoji = '💧';
-        break;
-      case PlantHealth.critical:
-        bgColor = AppColors.healthCritical;
-        label = 'Critical';
-        emoji = '🚨';
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 12)),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLevelBadge(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(LucideIcons.sparkles, size: 14, color: AppColors.gold),
-          const SizedBox(width: 4),
-          Text(
-            'Lv.${plant.level}',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
+  static const _healthConfig = {
+    PlantHealth.excellent: {'text': 'Thriving', 'icon': '✨'},
+    PlantHealth.good: {'text': 'Healthy', 'icon': '🌿'},
+    PlantHealth.warning: {'text': 'Needs Care', 'icon': '💧'},
+  };
 }
