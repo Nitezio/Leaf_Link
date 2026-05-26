@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
+import '../services/image_service.dart';
+import '../services/storage_service.dart';
 import '../models/app_state.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -38,6 +42,15 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
     _level = plant?.level ?? 1;
   }
 
+  Future<void> _pickImage() async {
+    final path = await ImageService.pickFromGallery();
+    if (path != null) {
+      setState(() {
+        _imageCtrl.text = path;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose();
@@ -52,23 +65,34 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
   void _savePlant() {
     if (!_formKey.currentState!.validate()) return;
     final state = context.read<AppState>();
-    final plant = Plant(
+    Future<void> doSave() async {
+      String imageVal = _imageCtrl.text.trim();
+      if (imageVal.isNotEmpty && !imageVal.startsWith('http')) {
+        try {
+          final uploaded = await StorageService.uploadFile(imageVal);
+          if (uploaded != null && uploaded.isNotEmpty) imageVal = uploaded;
+        } catch (_) {}
+      }
+      final plant = Plant(
       id: widget.plant?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       name: _nameCtrl.text.trim(),
       species: _speciesCtrl.text.trim(),
-      image: _imageCtrl.text.trim(),
+      image: imageVal,
       notes: _notesCtrl.text.trim(),
       lastWatered: _lastWateredCtrl.text.trim(),
       nextWatering: _nextWateringCtrl.text.trim(),
       health: _health,
       level: _level,
     );
-    if (widget.plant == null) {
-      state.addPlant(plant);
-    } else {
-      state.updatePlant(plant);
+      if (widget.plant == null) {
+        state.addPlant(plant);
+      } else {
+        state.updatePlant(plant);
+      }
+      if (!mounted) return;
+      Navigator.pop(context, true);
     }
-    Navigator.pop(context, true);
+    doSave();
   }
 
   @override
@@ -89,11 +113,32 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
             key: _formKey,
             child: Column(
               children: [
+                if (_imageCtrl.text.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      height: 160,
+                      width: double.infinity,
+                      child: kIsWeb || _imageCtrl.text.startsWith('http')
+                          ? Image.network(_imageCtrl.text, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 40, color: Colors.white)))
+                          : Image.file(File(_imageCtrl.text), fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 40, color: Colors.white))),
+                    ),
+                  ),
+                const SizedBox(height: 12),
                 _field(_nameCtrl, 'Plant name'),
                 const SizedBox(height: 12),
                 _field(_speciesCtrl, 'Species'),
                 const SizedBox(height: 12),
-                _field(_imageCtrl, 'Image URL', keyboardType: TextInputType.url),
+                _field(_imageCtrl, 'Image URL or path', keyboardType: TextInputType.url),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _pickImage,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Pick from gallery'),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 _field(_notesCtrl, 'Notes', maxLines: 3),
                 const SizedBox(height: 12),
@@ -109,7 +154,7 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<PlantHealth>(
-                        value: _health,
+                        initialValue: _health,
                         decoration: _inputDecoration('Health'),
                         items: PlantHealth.values
                             .map((health) => DropdownMenuItem(

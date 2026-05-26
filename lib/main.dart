@@ -37,7 +37,7 @@ class PlantCareApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
       darkTheme: AppTheme.theme,
-      themeMode: ThemeMode.light,
+      themeMode: context.select((AppState s) => s.isDarkMode ? ThemeMode.dark : ThemeMode.light),
       home: const _RootNavigator(),
     );
   }

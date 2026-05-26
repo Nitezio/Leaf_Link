@@ -1,5 +1,41 @@
 enum PlantHealth { excellent, good, warning }
 
+class CareEvent {
+  final String id;
+  final String type; // 'water', 'note', 'photo', etc.
+  final String timestamp; // ISO string
+  final String? note;
+  final String? photoPath;
+
+  CareEvent({
+    required this.id,
+    required this.type,
+    required this.timestamp,
+    this.note,
+    this.photoPath,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'type': type,
+      'timestamp': timestamp,
+      'note': note,
+      'photoPath': photoPath,
+    };
+  }
+
+  factory CareEvent.fromMap(Map<String, dynamic> map) {
+    return CareEvent(
+      id: map['id'] as String,
+      type: map['type'] as String,
+      timestamp: map['timestamp'] as String,
+      note: map['note'] as String?,
+      photoPath: map['photoPath'] as String?,
+    );
+  }
+}
+
 class Plant {
   final String id;
   final String name;
@@ -10,6 +46,7 @@ class Plant {
   String nextWatering;
   PlantHealth health;
   final int level;
+  final List<CareEvent> careHistory;
 
   Plant({
     required this.id,
@@ -21,6 +58,7 @@ class Plant {
     required this.nextWatering,
     required this.health,
     required this.level,
+    this.careHistory = const [],
   });
 
   Plant copyWith({
@@ -32,6 +70,7 @@ class Plant {
     String? nextWatering,
     PlantHealth? health,
     int? level,
+    List<CareEvent>? careHistory,
   }) {
     return Plant(
       id: id,
@@ -43,6 +82,7 @@ class Plant {
       lastWatered: lastWatered ?? this.lastWatered,
       nextWatering: nextWatering ?? this.nextWatering,
       health: health ?? this.health,
+      careHistory: careHistory ?? this.careHistory,
     );
   }
 
@@ -57,6 +97,7 @@ class Plant {
       'nextWatering': nextWatering,
       'health': health.index,
       'level': level,
+      'careHistory': careHistory.map((c) => c.toMap()).toList(),
     };
   }
 
@@ -71,6 +112,9 @@ class Plant {
       nextWatering: map['nextWatering'] as String,
       health: PlantHealth.values[map['health'] as int],
       level: map['level'] as int,
+      careHistory: (map['careHistory'] as List<dynamic>?)
+              ?.map((c) => CareEvent.fromMap(Map<String, dynamic>.from(c as Map)))
+              .toList() ?? [],
     );
   }
 }
