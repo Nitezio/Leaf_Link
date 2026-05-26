@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'models/app_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/welcome_screen.dart';
@@ -9,15 +8,6 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    // If Firebase initialization fails (missing platform files), continue
-    // so the app remains usable in prototype mode.
-    // Log the error in debug builds.
-    // ignore: avoid_print
-    print('Firebase.initializeApp() failed: $e');
-  }
 
   runApp(
     ChangeNotifierProvider(

@@ -16,7 +16,7 @@ class FirestoreService {
     try {
       await postsCollection().add(post);
     } catch (e, st) {
-      logger.e('Failed to add post to Firestore', e, st);
+      logger.e('Failed to add post to Firestore', error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -26,7 +26,7 @@ class FirestoreService {
     try {
       await postsCollection().doc(id).set(post);
     } catch (e, st) {
-      logger.e('Failed to set post in Firestore', e, st);
+      logger.e('Failed to set post in Firestore', error: e, stackTrace: st);
       rethrow;
     }
   }

@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 /// Simple AuthService wrapping Firebase Auth for email/password and Google.
 class AuthService {
@@ -22,13 +21,8 @@ class AuthService {
   }
 
   Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return null; // user aborted
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    return _auth.signInWithCredential(credential);
+    // Google sign-in is not wired in the current local-first prototype.
+    // Returning null keeps the service compilable on web until the flow is reintroduced.
+    return null;
   }
 }

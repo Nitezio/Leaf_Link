@@ -16,9 +16,19 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _showPassword = false;
   bool _isLoading = false;
   String? _errorText;
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _passwordCtrl;
   final _nameCtrl = TextEditingController();
+
+  static const _testEmail = 'test@gmail.com';
+  static const _testPassword = '123test';
+
+  @override
+  void initState() {
+    super.initState();
+    _emailCtrl = TextEditingController(text: _testEmail);
+    _passwordCtrl = TextEditingController(text: _testPassword);
+  }
 
   @override
   void dispose() {

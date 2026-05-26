@@ -1,6 +1,8 @@
 LeafLink Audit Plan — 2026-05-25
 =================================
 
+Last updated: 2026-05-26 10:10:17 +08:00
+
 Summary (updated 2026-05-25)
 - Completed: analyzer cleanup; Plant CRUD + detail screens; Settings/profile persistence; local auth/session polish; widget tests fixed and green.
 - In scope: make prototype local-first; guard Firestore; keep tests deterministic for CI.
@@ -24,6 +26,50 @@ Remaining / Not Completed
 - CI integration: tests pass locally; not yet pushed and validated in CI pipeline.
 - Commit & branch: test fixes and updated files are not yet committed to a dedicated branch (left as next step).
 - Extended unit tests: additional coverage for persistence and edge cases still needed.
+
+Severity-Ranked Findings
+1. High - Cart state is not fully reactive or durable.
+	- The cart sheet does not listen live to `AppState`, and cart quantity changes are not persisted immediately.
+	- Impact: the UI can go stale while the sheet is open, and quantities can be lost after restart.
+
+2. High - Authentication is still local-only.
+	- Firebase Auth exists as a service, but the app UI still uses local session state.
+	- Impact: there is no real backend sign-in, account recovery, or durable authenticated session.
+
+3. Medium - Plant images can fail for local file paths.
+	- `PlantCard` currently assumes network images, so gallery-picked local files may not render correctly there.
+
+4. Medium - Community dialogs rely on analyzer suppression.
+	- `community_tab.dart` currently suppresses `use_build_context_synchronously` at the file level.
+	- Impact: the code passes analysis, but future async UI changes are easier to get wrong.
+
+5. Medium - Firestore data parsing is brittle.
+	- The sync layer assumes a strict document shape, so malformed data could throw at runtime.
+
+6. Low - Several features remain UI prototypes.
+	- Scan/AR, checkout, notifications/scheduler, and deeper backend sync are still not fully implemented.
+
+Prioritized Remediation Plan
+1. Fix cart reactivity and persistence first.
+	- Rebuild the cart sheet from live `AppState` changes and save quantity mutations immediately.
+	- Add a test for quantity updates while the cart sheet is open.
+
+2. Decide the auth strategy.
+	- Either wire Firebase Auth into the login flow or remove the unused auth surface until backend auth is ready.
+	- If auth stays local-only for now, document that clearly in the app and audit notes.
+
+3. Harden image rendering.
+	- Update plant cards to handle local file images as well as network URLs.
+	- Add coverage for gallery-picked images.
+
+4. Remove the community lint suppression.
+	- Refactor dialog flows so `BuildContext` is only used safely after async gaps.
+
+5. Tighten backend sync contracts.
+	- Add defensive parsing for Firestore documents and better fallback behavior for unexpected data.
+
+6. Finish the remaining product gaps.
+	- Add checkout, scheduling/notifications, accessibility, localization, and a real scan/AR integration plan.
 
 On Pause / Put On Hold
 - Firestore integration: Live Firestore features are intentionally guarded and not fully wired — left for later when backend is available.

@@ -266,7 +266,7 @@ class AppState extends ChangeNotifier {
         ..addAll(loadedPlants);
       notifyListeners();
     } catch (e, st) {
-      logger.e('Failed to load plants', e, st);
+      logger.e('Failed to load plants', error: e, stackTrace: st);
       await _savePlants();
     }
   }
@@ -292,7 +292,7 @@ class AppState extends ChangeNotifier {
         isDarkMode = (map['isDarkMode'] as bool?) ?? isDarkMode;
       notifyListeners();
     } catch (e, st) {
-      logger.e('Failed to load profile settings', e, st);
+      logger.e('Failed to load profile settings', error: e, stackTrace: st);
       await _saveProfileSettings();
     }
   }
@@ -327,7 +327,7 @@ class AppState extends ChangeNotifier {
       _lastWaterDate = map['lastWaterDate'] as String?;
       notifyListeners();
     } catch (e, st) {
-      logger.e('Failed to load auth session', e, st);
+      logger.e('Failed to load auth session', error: e, stackTrace: st);
       await _saveAuthSession();
     }
   }
@@ -602,7 +602,7 @@ class AppState extends ChangeNotifier {
       _communityLoaded = true;
       notifyListeners();
     } catch (e, st) {
-      logger.e('Failed to load community posts', e, st);
+      logger.e('Failed to load community posts', error: e, stackTrace: st);
       _communityPosts
         ..clear()
         ..addAll(_seedCommunityPosts());
@@ -627,7 +627,7 @@ class AppState extends ChangeNotifier {
         ..addAll(items);
       notifyListeners();
     } catch (e, st) {
-      logger.w('Failed to load cart', e, st);
+      logger.w('Failed to load cart', error: e, stackTrace: st);
     }
   }
 
@@ -636,7 +636,7 @@ class AppState extends ChangeNotifier {
       final payload = jsonEncode(cartItems.map((c) => {'id': c.item.id, 'quantity': c.quantity}).toList());
       await PersistenceService.instance.setString(_cartPrefsKey, payload);
     } catch (e, st) {
-      logger.w('Failed to save cart', e, st);
+      logger.w('Failed to save cart', error: e, stackTrace: st);
     }
   }
 
@@ -688,12 +688,12 @@ class AppState extends ChangeNotifier {
         try {
           await _firestore.setPost(post.id, post.toMap());
         } catch (e, st) {
-          logger.w('Per-post migration failed for ${post.id}', e, st);
+          logger.w('Per-post migration failed for ${post.id}', error: e, stackTrace: st);
         }
       }
       await PersistenceService.instance.setBool('community_migrated_v1', true);
     } catch (e, st) {
-      logger.e('Migration to Firestore failed', e, st);
+      logger.e('Migration to Firestore failed', error: e, stackTrace: st);
       // migration failed, keep flag false for retry
     }
   }
