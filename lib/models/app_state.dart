@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../services/firestore_service.dart';
 import '../services/persistence_service.dart';
 import '../services/app_logger.dart';
+import '../services/secure_storage_service.dart';
 import 'models.dart';
 
 class AppState extends ChangeNotifier {
@@ -17,11 +18,13 @@ class AppState extends ChangeNotifier {
   AppState() {
     plants.addAll([]);
     _loadPlants();
+    _loadMarketplace();
     _loadProfileSettings();
     _loadAuthSession();
     _communityPosts.addAll(_seedCommunityPosts());
     _loadCommunityPosts();
     _loadCart();
+    _loadWateringSchedule();
     // Attempt background migration to Firestore (idempotent)
     migrateLocalPostsToFirestore();
   }
@@ -82,7 +85,7 @@ class AppState extends ChangeNotifier {
   bool _communityLoaded = false;
   final FirestoreService _firestore = FirestoreService();
 
-  final List<MarketplaceItem> marketplaceItems = const [
+  final List<MarketplaceItem> marketplaceItems = [
     MarketplaceItem(
       id: 'market-1',
       name: 'Peace Lily',
@@ -127,6 +130,10 @@ class AppState extends ChangeNotifier {
       stock: 9,
     ),
   ];
+
+  // simple in-app scheduling for watering reminders (persisted locally)
+  static const _wateringScheduleKey = 'watering_schedule_v1';
+  final Map<String, String> _wateringSchedule = {}; // plantId -> ISO timestamp
 
   final List<CartItem> cartItems = [];
 
@@ -316,7 +323,11 @@ class AppState extends ChangeNotifier {
 
   Future<void> _loadAuthSession() async {
     try {
-      final raw = await PersistenceService.instance.getString(_authPrefsKey);
+      // Prefer secure storage for auth session, fall back to shared prefs.
+      String? raw = await SecureStorageService.instance.read('auth_session');
+      if (raw == null || raw.isEmpty) {
+        raw = await PersistenceService.instance.getString(_authPrefsKey);
+      }
       if (raw == null || raw.isEmpty) {
         await _saveAuthSession();
         return;
@@ -338,7 +349,13 @@ class AppState extends ChangeNotifier {
       'sessionEmail': sessionEmail,
       'lastWaterDate': _lastWaterDate,
     });
-    await PersistenceService.instance.setString(_authPrefsKey, payload);
+    // persist to secure storage primarily
+    try {
+      await SecureStorageService.instance.write('auth_session', payload);
+    } catch (_) {}
+    try {
+      await PersistenceService.instance.setString(_authPrefsKey, payload);
+    } catch (_) {}
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
@@ -416,6 +433,76 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Schedule an in-app watering reminder for a plant (persists locally).
+  Future<void> scheduleWatering(String plantId, DateTime when) async {
+    _wateringSchedule[plantId] = when.toIso8601String();
+    // update plant display
+    final idx = plants.indexWhere((p) => p.id == plantId);
+    if (idx != -1) {
+      final friendly = _friendlyNextWatering(when);
+      plants[idx] = plants[idx].copyWith(nextWatering: friendly);
+      _savePlants();
+    }
+    await _saveWateringSchedule();
+    notifyListeners();
+  }
+
+  Future<void> cancelScheduledWatering(String plantId) async {
+    _wateringSchedule.remove(plantId);
+    final idx = plants.indexWhere((p) => p.id == plantId);
+    if (idx != -1) {
+      plants[idx] = plants[idx].copyWith(nextWatering: 'Not scheduled');
+      _savePlants();
+    }
+    await _saveWateringSchedule();
+    notifyListeners();
+  }
+
+  DateTime? scheduledFor(String plantId) {
+    final v = _wateringSchedule[plantId];
+    if (v == null) return null;
+    try {
+      return DateTime.parse(v);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _friendlyNextWatering(DateTime when) {
+    final now = DateTime.now();
+    final diff = when.difference(now).inDays;
+    if (diff < 0) return 'Overdue';
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    return 'In $diff days';
+  }
+
+  Future<void> _saveWateringSchedule() async {
+    try {
+      await PersistenceService.instance.setString(_wateringScheduleKey, jsonEncode(_wateringSchedule));
+    } catch (_) {}
+  }
+
+  Future<void> _loadWateringSchedule() async {
+    try {
+      final raw = await PersistenceService.instance.getString(_wateringScheduleKey);
+      if (raw == null || raw.isEmpty) return;
+      final map = jsonDecode(raw) as Map<String, dynamic>;
+      map.forEach((k, v) {
+        final s = v?.toString() ?? '';
+        _wateringSchedule[k] = s;
+        // apply to plant display if exists
+        final idx = plants.indexWhere((p) => p.id == k);
+        if (idx != -1) {
+          try {
+            final dt = DateTime.parse(s);
+            plants[idx] = plants[idx].copyWith(nextWatering: _friendlyNextWatering(dt));
+          } catch (_) {}
+        }
+      });
+    } catch (_) {}
+  }
+
   void addToCart(MarketplaceItem item) {
     final existing = cartItemFor(item.id);
     if (existing != null) {
@@ -429,6 +516,58 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Simulate a checkout: validate stock, decrement inventory, clear cart.
+  /// Returns true if checkout succeeded.
+  bool checkoutCart() {
+    // validate
+    for (final ci in cartItems) {
+      final storeItem = marketplaceItems.firstWhere((it) => it.id == ci.item.id, orElse: () => ci.item);
+      if (ci.quantity > storeItem.stock) return false;
+    }
+    // apply purchase
+    for (final ci in cartItems) {
+      final idx = marketplaceItems.indexWhere((it) => it.id == ci.item.id);
+      if (idx != -1) {
+        marketplaceItems[idx].stock = (marketplaceItems[idx].stock - ci.quantity).clamp(0, 9999);
+      }
+    }
+    // award points
+    userStats.points += cartItems.fold<int>(0, (s, c) => s + (c.quantity * 10));
+    clearCart();
+    _saveMarketplace();
+    notifyListeners();
+    return true;
+  }
+
+  static const _marketplacePrefsKey = 'marketplace_v1';
+
+  Future<void> _saveMarketplace() async {
+    try {
+      final list = marketplaceItems.map((m) => {
+            'id': m.id,
+            'stock': m.stock,
+          }).toList();
+      await PersistenceService.instance.setString(_marketplacePrefsKey, jsonEncode(list));
+    } catch (_) {}
+  }
+
+  Future<void> _loadMarketplace() async {
+    try {
+      final raw = await PersistenceService.instance.getString(_marketplacePrefsKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      for (final map in decoded) {
+        final id = map['id'] as String?;
+        final stock = (map['stock'] as num?)?.toInt();
+        if (id == null || stock == null) continue;
+        final idx = marketplaceItems.indexWhere((it) => it.id == id);
+        if (idx != -1) {
+          marketplaceItems[idx].stock = stock;
+        }
+      }
+    } catch (_) {}
+  }
+
   void removeFromCart(String itemId) {
     cartItems.removeWhere((item) => item.item.id == itemId);
     _saveCart();
@@ -439,6 +578,7 @@ class AppState extends ChangeNotifier {
     final existing = cartItemFor(itemId);
     if (existing == null || existing.quantity >= existing.item.stock) return;
     existing.quantity += 1;
+    _saveCart();
     notifyListeners();
   }
 
@@ -450,6 +590,7 @@ class AppState extends ChangeNotifier {
       return;
     }
     existing.quantity -= 1;
+    _saveCart();
     notifyListeners();
   }
 

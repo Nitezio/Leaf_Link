@@ -215,7 +215,7 @@ class PlantDetailScreen extends StatelessWidget {
                       child: const Text('Edit Plant'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
@@ -231,6 +231,38 @@ class PlantDetailScreen extends StatelessWidget {
                       ),
                       child: const Text('Water Now'),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton(
+                    // ignore: use_build_context_synchronously
+                    onPressed: () async {
+                      final appState = context.read<AppState>();
+                      final messenger = ScaffoldMessenger.of(context);
+                      final ctx = context;
+                      // schedule a watering reminder: pick date then time
+                      // ignore: use_build_context_synchronously
+                      final date = await showDatePicker(
+                        context: ctx,
+                        initialDate: DateTime.now().add(const Duration(days: 1)),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date == null) return;
+                      // ignore: use_build_context_synchronously
+                      final time = await showTimePicker(
+                        context: ctx,
+                        initialTime: const TimeOfDay(hour: 9, minute: 0),
+                      );
+                      if (time == null) return;
+                      final scheduled = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+                      await appState.scheduleWatering(plant.id, scheduled);
+                      messenger.showSnackBar(SnackBar(content: Text('Reminder scheduled for ${scheduled.toLocal()}')));
+                    },
+                    style: OutlinedButton.styleFrom(
+                      shape: const StadiumBorder(),
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    child: const Text('Schedule Reminder'),
                   ),
                 ],
               ),

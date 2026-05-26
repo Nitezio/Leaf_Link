@@ -7,9 +7,11 @@ Last updated: 2026-05-26 10:10:17 +08:00
 - Branch: main (synced with origin/main at time of audit).
 - Checks run: flutter analyze, flutter test --coverage.
 
-## Current health
-- Analyzer: clean (no issues).
-- Tests: all passing (10 tests).
+- ## Current health
+- Analyzer: informational issues remain (4 items found: 3 info-level, 1 warning).
+	- Notable: `use_build_context_synchronously` info in `lib/screens/plant_detail_screen.dart`.
+	- Test files use a deprecated `setMockMethodCallHandler` pattern (update to TestDefaultBinaryMessengerBinding).
+- Tests: test suite ran; all tests passed in current run. Some tests mock platform plugins (shared_preferences, flutter_secure_storage) to run in the VM.
 - CI: GitHub Actions runs analyze and tests on push/PR in [ .github/workflows/flutter-ci.yaml ]( .github/workflows/flutter-ci.yaml ).
 
 ## Architecture overview
@@ -145,3 +147,15 @@ Percentages are subjective and reflect implementation depth, not design polish.
 4. Replace lint ignores by restructuring dialog flows in community.
 5. Decide on secure storage usage and migrate session data if needed.
 6. Add integration tests (sign-out navigation, cart persistence, community sync).
+
+## Deep Audit (2026-05-27)
+
+- Audit performed: repo-wide grep + analyzer + focused test runs; generated a full text report at [docs/FULL_AUDIT_REPORT.txt](docs/FULL_AUDIT_REPORT.txt).
+- TODO list updated to reflect recent work (plant management marked completed; other items set to in-progress/not-started as appropriate).
+- Quick deltas since last report:
+	- Added local scheduling UI for plants and persisted marketplace stock handling.
+	- Migrated auth-session persistence to prefer `flutter_secure_storage` with prefs fallback.
+	- Added a no-op `NotificationService` wrapper (placeholder for later `flutter_local_notifications` integration).
+	- Added unit tests for scheduling and marketplace checkout and mocked platform channels for test stability.
+
+See `docs/FULL_AUDIT_REPORT.txt` for the full audit, evidence, and prioritized remediation plan.

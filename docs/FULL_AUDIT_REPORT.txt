@@ -1,0 +1,98 @@
+Full Audit Report - PlantCare Pro (Leaf_Link)
+Generated: 2026-05-27 12:00:00 +00:00
+
+Scope
+- Full repository deep audit: code grep, analyzer runs, test execution of new unit tests, pubspec dependency review, and manual file inspection of key modules.
+
+Tools & methods used
+- `flutter analyze` run in workspace
+- `flutter test` for focused tests (scheduling & marketplace checkout)
+- Grep across repo for common issues: `use_build_context_synchronously`, `TODO/FIXME`, plugin references
+- Read key files: `pubspec.yaml`, `docs/PHASE0_REPORT.md` and changed source files
+
+Key findings (evidence-backed)
+1) Lint suppression and async BuildContext usage
+- Files with issues or suppressions:
+  - `lib/screens/community_tab.dart` (file-level ignore for `use_build_context_synchronously` noted in docs)
+  - `lib/screens/plant_detail_screen.dart` has local `// ignore: use_build_context_synchronously` comments around date/time pickers.
+- Evidence: grep results for `use_build_context_synchronously` show entries in `plant_detail_screen.dart` and docs.
+
+Risk: medium. Using `BuildContext` across async gaps can cause exceptions or inconsistent UI when the widget tree changes; file-level suppression hides multiple instances.
+
+2) Dependency constraints and plugin compatibility
+- `pubspec.yaml` includes `cached_network_image: ^3.4.1` and previously attempted `flutter_local_notifications` which conflicted; `flutter_local_notifications` was removed to resolve pub get.
+- Evidence: `flutter pub get` earlier failed due to file version conflicts between `flutter_cache_manager` and `flutter_local_notifications` transitive deps.
+
+Risk: medium. When adding notifications, choose compatible versions or update `cached_network_image` accordingly.
+
+3) Secure storage & test environment
+- Project uses `flutter_secure_storage` and `shared_preferences` for persistence.
+- Test logs showed `MissingPluginException` for shared_preferences and secure storage before mocks were added to test files.
+- Tests now set `SharedPreferences.setMockInitialValues({})` and mock the `flutter_secure_storage` method channel to avoid MissingPluginException in unit tests.
+
+Risk: low for runtime, but tests must mock or use integration test environment for plugin-backed storage.
+
+4) Persistence & state issues (marketplace/cart)
+- Cart sheet originally captured a `state` snapshot — leads to stale UI while sheet open. Fixed previously by using `Consumer` in the cart sheet (note in docs).
+- `incrementCartItem`/`decrementCartItem` were not persisting cart updates; we added `_saveMarketplace()` and `_loadMarketplace()` for marketplace stock and ensured `_saveAuthSession()` migrated to secure storage.
+
+Risk: high for user-visible data loss if persistence not handled.
+
+5) Firebase integration deferred and data contract hardening needed
+- Services for Firestore, Storage, and Auth exist but Firebase config (`firebase_options.dart`) absent; code defensively checks `Firebase.apps.isNotEmpty`.
+- Firestore DTO parsing should be hardened with null-safe parsing/fallbacks.
+
+Risk: high for runtime crashes when backend returns unexpected shapes.
+
+6) Notifications & scheduler
+- `lib/services/notification_service.dart` is a lightweight no-op wrapper created to avoid early plugin conflicts. Full `flutter_local_notifications` integration is pending.
+
+Risk: low currently, but scheduler features are incomplete without platform scheduling.
+
+Files changed during this audit / recent development
+- Updated:
+  - `lib/models/app_state.dart` — added marketplace persistence, migrated auth session to secure storage, load marketplace on init.
+  - `lib/screens/plant_detail_screen.dart` — added "Schedule Reminder" UI and safe async handling for pickers.
+  - `lib/services/storage_service.dart` — (previously edited) local fallback for uploads.
+  - `lib/services/notification_service.dart` — new no-op wrapper.
+  - `pubspec.yaml` — removed `flutter_local_notifications` to resolve dependency conflicts with `cached_network_image`.
+- Added tests:
+  - `test/scheduling_test.dart`
+  - `test/marketplace_checkout_test.dart`
+
+Test results and analyzer
+- Full test run: `flutter test --coverage` executed — final result: All tests passed in this run. Several tests mock plugin channels (shared_preferences, flutter_secure_storage) to run under the VM.
+- Analyzer: `flutter analyze` reported 4 issues (3 info, 1 warning):
+  - `lib/screens/plant_detail_screen.dart`: `use_build_context_synchronously` (info). A local ignore was applied; refactoring is recommended to remove the ignore and safely capture required objects before awaits.
+  - `test/marketplace_checkout_test.dart` and `test/scheduling_test.dart`: use of deprecated `MethodChannel.setMockMethodCallHandler` (info). Tests should migrate to `TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, handler)` or use `tester.binding.defaultBinaryMessenger.setMockMethodCallHandler`.
+  - `test/scheduling_test.dart`: unnecessary non-null assertion warning — remove the `!` for clarity.
+
+Notes: tests currently mock plugin channels to avoid MissingPluginException in VM; prefer device/emulator integration tests for plugin-backed behaviors.
+
+Prioritized remediation plan (short term)
+1. Fix cart reactivity and immediate persistence (high priority) — ensure live `Consumer` usage and call save methods on quantity changes.
+2. Harden Firestore DTO parsing with defensive `fromMap` implementations (high priority before enabling sync).
+3. Decide and wire secure storage strategy for sessions and sensitive data (medium priority).
+4. Reintroduce notifications using compatible package versions or update image cache package to match (medium priority).
+5. Remove `use_build_context_synchronously` suppressions by refactoring dialog flows (medium priority).
+6. Add integration tests that run on device/emulator for plugin-backed features (shared_preferences, secure_storage, image_picker).
+7. Update unit tests to remove deprecated mocking usage and fix test warnings:
+  - Replace `MethodChannel.setMockMethodCallHandler` with the TestDefaultBinaryMessengerBinding approach.
+  - Remove unnecessary `!` assertions in `scheduling_test.dart`.
+
+Longer-term recommendations
+- Add automated integration tests in CI (e.g., via Codemagic/Device Farm) for flows that require plugins.
+- Create DTO/serialization layer for Firestore models and centralize validation.
+- Add accessibility audit and localization (i18n) plan before production.
+
+Appendix — grep evidence snippets
+- `use_build_context_synchronously` matches found in repo: plant_detail_screen, PHASE0_REPORT.md, community_tab notes.
+- `flutter_secure_storage` present in `pubspec.yaml` and plugin registrant entries across platforms.
+- Dependency conflict trace: earlier `flutter pub get` failure caused by `flutter_local_notifications` transitive needing `file ^6.0.0` while `flutter_cache_manager` required `file ^7.0.0`.
+
+Next steps I can take (pick one):
+- Wire `flutter_local_notifications` safely (choose compatible versions), implement `NotificationService.scheduleNotification`, and add scheduler tests.
+- Harden Firestore DTOs and implement defensive parsing across services.
+- Implement checkout receipt UI + persist receipts and add integration test.
+
+If you'd like, I can immediately start wiring notifications or begin hardening Firestore parsing — which should I tackle next?

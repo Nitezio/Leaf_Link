@@ -251,9 +251,9 @@ class MarketplaceItem {
   final String emoji;
   final String? badge;
   final String description;
-  final int stock;
+  int stock;
 
-  const MarketplaceItem({
+  MarketplaceItem({
     required this.id,
     required this.name,
     required this.price,

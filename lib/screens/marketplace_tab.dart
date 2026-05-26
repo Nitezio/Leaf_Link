@@ -44,13 +44,14 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
-        final cart = state.cartItems;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        return Consumer<AppState>(builder: (context, stateInside, _) {
+          final cart = stateInside.cartItems;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 Container(
                   width: 40,
                   height: 4,
@@ -90,9 +91,9 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                         final cartItem = cart[index];
                         return _CartRow(
                           item: cartItem,
-                          onAdd: () => state.incrementCartItem(cartItem.item.id),
-                          onRemove: () => state.decrementCartItem(cartItem.item.id),
-                          onDelete: () => state.removeFromCart(cartItem.item.id),
+                          onAdd: () => stateInside.incrementCartItem(cartItem.item.id),
+                          onRemove: () => stateInside.decrementCartItem(cartItem.item.id),
+                          onDelete: () => stateInside.removeFromCart(cartItem.item.id),
                         );
                       },
                     ),
@@ -102,7 +103,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: cart.isEmpty ? null : state.clearCart,
+                        onPressed: cart.isEmpty ? null : stateInside.clearCart,
                         style: OutlinedButton.styleFrom(
                           shape: const StadiumBorder(),
                           side: const BorderSide(color: AppColors.border),
@@ -113,13 +114,34 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: cart.isEmpty ? null : () {},
+                        onPressed: cart.isEmpty
+                            ? null
+                            : () async {
+                                final navigator = Navigator.of(context);
+                                final messenger = ScaffoldMessenger.of(context);
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (dctx) => AlertDialog(
+                                    title: const Text('Confirm purchase'),
+                                    content: Text('Buy ${stateInside.cartCount} item(s) from your cart?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Cancel')),
+                                      TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Buy')),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  final ok = stateInside.checkoutCart();
+                                  messenger.showSnackBar(SnackBar(content: Text(ok ? 'Purchase successful' : 'Purchase failed: insufficient stock')));
+                                  if (ok) navigator.pop();
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                           shape: const StadiumBorder(),
                         ),
-                        child: Text('Checkout (${state.cartCount})'),
+                        child: Text('Checkout (${stateInside.cartCount})'),
                       ),
                     ),
                   ],
@@ -128,6 +150,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
             ),
           ),
         );
+        });
       },
     );
   }

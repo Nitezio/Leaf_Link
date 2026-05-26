@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
@@ -142,7 +140,32 @@ class _CommunityTabState extends State<CommunityTab> {
                                   ),
                                 ),
                                 if (comment.author == 'You')
-                                  IconButton(onPressed: () => context.read<AppState>().deleteCommunityComment(post.id, comment.id), icon: const Icon(Icons.delete_outline, color: AppColors.mutedForeground)),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () async {
+                                          final app = context.read<AppState>();
+                                          final editCtrl = TextEditingController(text: comment.text);
+                                          final edited = await showDialog<String>(
+                                            context: sheetContext,
+                                            builder: (dctx) => AlertDialog(
+                                              title: const Text('Edit comment'),
+                                              content: TextField(controller: editCtrl, maxLines: 3),
+                                              actions: [
+                                                TextButton(onPressed: () => Navigator.pop(dctx, null), child: const Text('Cancel')),
+                                                TextButton(onPressed: () => Navigator.pop(dctx, editCtrl.text), child: const Text('Save')),
+                                              ],
+                                            ),
+                                          );
+                                          if (edited != null && edited.trim().isNotEmpty) {
+                                            app.editCommunityComment(post.id, comment.id, edited.trim());
+                                          }
+                                        },
+                                        icon: const Icon(Icons.edit_outlined, color: AppColors.mutedForeground),
+                                      ),
+                                      IconButton(onPressed: () => context.read<AppState>().deleteCommunityComment(post.id, comment.id), icon: const Icon(Icons.delete_outline, color: AppColors.mutedForeground)),
+                                    ],
+                                  ),
                               ],
                             );
                           },
@@ -508,7 +531,7 @@ class _PostCard extends StatelessWidget {
                         if (choice == 'edit') {
                           final ctrl = TextEditingController(text: post.caption);
                           String? newImage = post.imageUrl;
-                          await showDialog<void>(
+                          final result = await showDialog<Map<String, String?>>(
                             context: localContext,
                             builder: (dctx) => AlertDialog(
                               title: const Text('Edit post'),
@@ -528,23 +551,23 @@ class _PostCard extends StatelessWidget {
                                 ],
                               ),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(dctx, null), child: const Text('Cancel')),
                                 TextButton(
-                                  onPressed: () async {
-                                    String? imageToSave = newImage;
-                                    if (imageToSave != null && !imageToSave.startsWith('http')) {
-                                      try {
-                                        imageToSave = await StorageService.uploadFile(imageToSave);
-                                      } catch (_) {}
-                                    }
-                                    app.editCommunityPost(post.id, caption: ctrl.text, imageUrl: imageToSave);
-                                    Navigator.pop(dctx);
-                                  },
+                                  onPressed: () => Navigator.pop(dctx, {'caption': ctrl.text, 'image': newImage}),
                                   child: const Text('Save'),
                                 ),
                               ],
                             ),
                           );
+                          if (result != null) {
+                            String? imageToSave = result['image'];
+                            if (imageToSave != null && !imageToSave.startsWith('http')) {
+                              try {
+                                imageToSave = await StorageService.uploadFile(imageToSave);
+                              } catch (_) {}
+                            }
+                            app.editCommunityPost(post.id, caption: result['caption'] ?? post.caption, imageUrl: imageToSave);
+                          }
                         } else if (choice == 'delete') {
                           final confirmed = await showDialog<bool>(
                             context: localContext,

@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 
@@ -42,13 +44,17 @@ class PlantCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                CachedNetworkImage(
-                  imageUrl: plant.image,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: AppColors.chart4),
-                  errorWidget: (_, __, ___) =>
-                      Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 48, color: Colors.white)),
-                ),
+                // Support both network images and local file paths (picked from gallery).
+                if (!kIsWeb && plant.image.isNotEmpty && !plant.image.startsWith('http'))
+                  Image.file(File(plant.image), fit: BoxFit.cover)
+                else
+                  CachedNetworkImage(
+                    imageUrl: plant.image,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(color: AppColors.chart4),
+                    errorWidget: (_, __, ___) =>
+                        Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 48, color: Colors.white)),
+                  ),
                 // Gradient
                 Container(
                   decoration: const BoxDecoration(
