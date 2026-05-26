@@ -19,27 +19,7 @@ Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _signInLocally(WidgetTester tester) async {
-  await tester.ensureVisible(find.text('Get Started'));
-  await tester.tap(find.text('Get Started'));
-  await tester.pumpAndSettle();
-
-  final fields = find.byType(TextField);
-  await tester.enterText(fields.at(0), 'tester@example.com');
-  await tester.enterText(fields.at(1), 'secret123');
-  await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
-  // Wait for change notifier -> navigator rebuild to complete.
-  await tester.pump();
-  // Avoid pumpAndSettle (can hang if animations or timers run); poll for Home.
-  var found = false;
-  for (var i = 0; i < 50; i++) {
-    if (find.text('Good Morning').evaluate().isNotEmpty) {
-      found = true;
-      break;
-    }
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
+// Removed unused sign-in helper to avoid analyzer warnings.
 
 void main() {
   testWidgets('local login flow reaches home', (WidgetTester tester) async {
@@ -84,6 +64,7 @@ void main() {
       await tester.enterText(fields.at(3), 'Keep the soil lightly moist.');
       await tester.enterText(fields.at(4), 'Today');
       await tester.enterText(fields.at(5), 'In 4 days');
+      await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Add Plant'));
       await tester.tap(find.widgetWithText(ElevatedButton, 'Add Plant'));
       await tester.pumpAndSettle();
 

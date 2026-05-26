@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../models/app_state.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -43,26 +45,28 @@ class PlantDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
+              final app = context.read<AppState>();
+              final navigator = Navigator.of(context);
               final deleted = await showDialog<bool>(
                 context: context,
-                builder: (_) => AlertDialog(
+                builder: (dctx) => AlertDialog(
                   title: const Text('Delete plant?'),
                   content: const Text('This will remove the plant from your garden.'),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context, false),
+                      onPressed: () => Navigator.pop(dctx, false),
                       child: const Text('Cancel'),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.pop(context, true),
+                      onPressed: () => Navigator.pop(dctx, true),
                       child: const Text('Delete'),
                     ),
                   ],
                 ),
               );
               if (deleted == true) {
-                context.read<AppState>().deletePlant(plantId);
-                if (context.mounted) Navigator.pop(context);
+                app.deletePlant(plantId);
+                if (navigator.mounted) navigator.pop();
               }
             },
             icon: const Icon(Icons.delete_outline),
@@ -79,14 +83,23 @@ class PlantDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 child: AspectRatio(
                   aspectRatio: 1.2,
-                  child: Image.network(
-                    plant.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: AppColors.chart4,
-                      child: const Icon(Icons.eco, size: 60, color: Colors.white),
-                    ),
-                  ),
+                  child: kIsWeb || plant.image.startsWith('http')
+                      ? Image.network(
+                          plant.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.chart4,
+                            child: const Icon(Icons.eco, size: 60, color: Colors.white),
+                          ),
+                        )
+                      : Image.file(
+                          File(plant.image),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.chart4,
+                            child: const Icon(Icons.eco, size: 60, color: Colors.white),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -130,6 +143,55 @@ class PlantDetailScreen extends StatelessWidget {
                     Text('Last watered: ${plant.lastWatered}'),
                     const SizedBox(height: 4),
                     Text('Next watering: ${plant.nextWatering}'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              _panel(
+                title: 'Care History',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (plant.careHistory.isEmpty)
+                      const Text('No care events yet.'),
+                    for (final e in plant.careHistory)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              e.type == 'water' ? Icons.opacity : Icons.note,
+                              color: AppColors.mutedForeground,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(e.type == 'water' ? 'Watered' : e.type,
+                                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 4),
+                                  Text(e.note ?? '', style: const TextStyle(color: AppColors.foreground)),
+                                  const SizedBox(height: 4),
+                                  Text(e.timestamp, style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+                                ],
+                              ),
+                            ),
+                            if (e.photoPath != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: SizedBox(
+                                  width: 64,
+                                  height: 64,
+                                  child: kIsWeb || e.photoPath!.startsWith('http')
+                                      ? Image.network(e.photoPath!, fit: BoxFit.cover)
+                                      : Image.file(File(e.photoPath!), fit: BoxFit.cover),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),

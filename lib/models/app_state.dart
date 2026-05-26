@@ -11,6 +11,8 @@ class AppState extends ChangeNotifier {
   static const _plantsPrefsKey = 'plants_v1';
   static const _profilePrefsKey = 'profile_v1';
   static const _authPrefsKey = 'auth_session_v1';
+  static const _cartPrefsKey = 'cart_v1';
+  // removed unused _lastWaterDateKey constant
 
   AppState() {
     plants.addAll([]);
@@ -19,6 +21,7 @@ class AppState extends ChangeNotifier {
     _loadAuthSession();
     _communityPosts.addAll(_seedCommunityPosts());
     _loadCommunityPosts();
+    _loadCart();
     // Attempt background migration to Firestore (idempotent)
     migrateLocalPostsToFirestore();
   }
@@ -135,6 +138,7 @@ class AppState extends ChangeNotifier {
   bool isLoggedIn = false;
   bool justSignedOut = false;
   String? sessionEmail;
+  String? _lastWaterDate; // YYYY-MM-DD
 
   List<CommunityPost> get communityPosts => List.unmodifiable(_communityPosts);
   bool get communityLoaded => _communityLoaded;
@@ -189,15 +193,61 @@ class AppState extends ChangeNotifier {
   void waterPlant(String id) {
     final idx = plants.indexWhere((p) => p.id == id);
     if (idx != -1) {
-      plants[idx] = plants[idx].copyWith(
+      // record care event
+      final now = DateTime.now();
+      final iso = now.toIso8601String();
+      final event = CareEvent(
+        id: _generateId(),
+        type: 'water',
+        timestamp: iso,
+      );
+      final updated = plants[idx].copyWith(
         lastWatered: 'Just now',
         nextWatering: 'In 3 days',
         health: PlantHealth.excellent,
+        careHistory: [event, ...plants[idx].careHistory],
       );
+      plants[idx] = updated;
+      // simple streak logic: compare last water day
+      final today = DateTime(now.year, now.month, now.day);
+      String todayKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      if (_lastWaterDate == null) {
+        userStats.streak = 1;
+      } else {
+        // parse previous
+        try {
+          final parts = _lastWaterDate!.split('-').map((s) => int.parse(s)).toList();
+          final prev = DateTime(parts[0], parts[1], parts[2]);
+          final diff = today.difference(prev).inDays;
+          if (diff == 0) {
+            // already watered today: no streak change
+          } else if (diff == 1) {
+            userStats.streak += 1;
+          } else {
+            userStats.streak = 1;
+          }
+        } catch (_) {
+          userStats.streak = 1;
+        }
+      }
+      _lastWaterDate = todayKey;
       userStats.points += 50;
-      userStats.streak += 1;
+      _saveAuthSession();
+      _savePlants();
       notifyListeners();
     }
+  }
+
+  /// Add a generic care event (note/photo/watering) for a plant.
+  void addCareEvent(String plantId, CareEvent event) {
+    final idx = plants.indexWhere((p) => p.id == plantId);
+    if (idx == -1) return;
+    final updated = plants[idx].copyWith(
+      careHistory: [event, ...plants[idx].careHistory],
+    );
+    plants[idx] = updated;
+    _savePlants();
+    notifyListeners();
   }
 
   Future<void> _loadPlants() async {
@@ -274,6 +324,7 @@ class AppState extends ChangeNotifier {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       isLoggedIn = (map['isLoggedIn'] as bool?) ?? false;
       sessionEmail = map['sessionEmail'] as String?;
+      _lastWaterDate = map['lastWaterDate'] as String?;
       notifyListeners();
     } catch (e, st) {
       logger.e('Failed to load auth session', e, st);
@@ -285,13 +336,14 @@ class AppState extends ChangeNotifier {
     final payload = jsonEncode({
       'isLoggedIn': isLoggedIn,
       'sessionEmail': sessionEmail,
+      'lastWaterDate': _lastWaterDate,
     });
     await PersistenceService.instance.setString(_authPrefsKey, payload);
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
     final trimmed = caption.trim();
-    if (trimmed.isEmpty) {
+    if (trimmed.isEmpty && (imageUrl == null || imageUrl.isEmpty)) {
       return;
     }
     final post = CommunityPost(
@@ -312,6 +364,58 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void editCommunityPost(String postId, {String? caption, String? imageUrl}) {
+    final idx = _communityPosts.indexWhere((p) => p.id == postId);
+    if (idx == -1) return;
+    final existing = _communityPosts[idx];
+    final updated = CommunityPost(
+      id: existing.id,
+      userName: existing.userName,
+      avatar: existing.avatar,
+      timeLabel: 'Just now',
+      caption: (caption ?? existing.caption).trim(),
+      imageUrl: imageUrl ?? existing.imageUrl,
+      likeCount: existing.likeCount,
+      commentCount: existing.commentCount,
+      likedByMe: existing.likedByMe,
+      bookmarked: existing.bookmarked,
+      comments: existing.comments,
+    );
+    _communityPosts[idx] = updated;
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void deleteCommunityPost(String postId) {
+    _communityPosts.removeWhere((p) => p.id == postId);
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void editCommunityComment(String postId, String commentId, String newText) {
+    final post = getCommunityPost(postId);
+    if (post == null) return;
+    final idx = post.comments.indexWhere((c) => c.id == commentId);
+    if (idx == -1) return;
+    post.comments[idx] = CommunityComment(
+      id: post.comments[idx].id,
+      author: post.comments[idx].author,
+      text: newText.trim(),
+      timeLabel: 'Just now',
+    );
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void deleteCommunityComment(String postId, String commentId) {
+    final post = getCommunityPost(postId);
+    if (post == null) return;
+    post.comments.removeWhere((c) => c.id == commentId);
+    post.commentCount = post.comments.length;
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
   void addToCart(MarketplaceItem item) {
     final existing = cartItemFor(item.id);
     if (existing != null) {
@@ -321,11 +425,13 @@ class AppState extends ChangeNotifier {
     } else {
       cartItems.add(CartItem(item: item, quantity: 1));
     }
+    _saveCart();
     notifyListeners();
   }
 
   void removeFromCart(String itemId) {
     cartItems.removeWhere((item) => item.item.id == itemId);
+    _saveCart();
     notifyListeners();
   }
 
@@ -349,6 +455,7 @@ class AppState extends ChangeNotifier {
 
   void clearCart() {
     cartItems.clear();
+    _saveCart();
     notifyListeners();
   }
 
@@ -502,6 +609,34 @@ class AppState extends ChangeNotifier {
       _communityLoaded = true;
       await _saveCommunityPosts();
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadCart() async {
+    try {
+      final raw = await PersistenceService.instance.getString(_cartPrefsKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      final items = decoded.map((m) {
+        final map = Map<String, dynamic>.from(m as Map);
+        final item = marketplaceItems.firstWhere((it) => it.id == map['id'] as String, orElse: () => throw StateError('Item not found'));
+        return CartItem(item: item, quantity: map['quantity'] as int);
+      }).toList();
+      cartItems
+        ..clear()
+        ..addAll(items);
+      notifyListeners();
+    } catch (e, st) {
+      logger.w('Failed to load cart', e, st);
+    }
+  }
+
+  Future<void> _saveCart() async {
+    try {
+      final payload = jsonEncode(cartItems.map((c) => {'id': c.item.id, 'quantity': c.quantity}).toList());
+      await PersistenceService.instance.setString(_cartPrefsKey, payload);
+    } catch (e, st) {
+      logger.w('Failed to save cart', e, st);
     }
   }
 

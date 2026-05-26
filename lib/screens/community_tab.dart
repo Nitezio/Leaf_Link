@@ -1,8 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_state.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../services/image_service.dart';
+import '../services/storage_service.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import '../widgets/responsive_body.dart';
 
 class CommunityTab extends StatefulWidget {
@@ -16,6 +22,7 @@ class _CommunityTabState extends State<CommunityTab> {
   final TextEditingController _postCtrl = TextEditingController();
   final TextEditingController _searchCtrl = TextEditingController();
   String _selectedFeed = 'All';
+  String? _attachedImagePath;
 
   @override
   void initState() {
@@ -32,12 +39,30 @@ class _CommunityTabState extends State<CommunityTab> {
 
   void _submitPost(AppState state) {
     final text = _postCtrl.text.trim();
-    if (text.isEmpty) {
+    if (text.isEmpty && (_attachedImagePath == null || _attachedImagePath!.isEmpty)) {
       return;
     }
-    state.addCommunityPost(text);
+    // If attached image is a local path, attempt to upload to Storage and get URL.
+    Future<void> doPost() async {
+      String? imageUrl = _attachedImagePath;
+      if (imageUrl != null && !imageUrl.startsWith('http')) {
+        try {
+          imageUrl = await StorageService.uploadFile(imageUrl);
+        } catch (_) {
+          // fallback to local path
+        }
+      }
+      state.addCommunityPost(text, imageUrl: imageUrl);
+    }
+    doPost();
     _postCtrl.clear();
+    setState(() => _attachedImagePath = null);
     FocusScope.of(context).unfocus();
+  }
+
+  Future<void> _pickImage() async {
+    final path = await ImageService.pickFromGallery();
+    if (path != null) setState(() => _attachedImagePath = path);
   }
 
   Future<void> _showComments(BuildContext context, CommunityPost post) async {
@@ -98,7 +123,28 @@ class _CommunityTabState extends State<CommunityTab> {
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final comment = comments[index];
-                            return _CommentTile(comment: comment);
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const CircleAvatar(radius: 16, backgroundColor: AppColors.chart3, child: Text('🧑', style: TextStyle(fontSize: 14))),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Text(comment.author, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.foreground)),
+                                      const SizedBox(height: 4),
+                                      Text(comment.text, style: const TextStyle(fontSize: 13, color: AppColors.foreground, height: 1.3)),
+                                      const SizedBox(height: 6),
+                                      Text(comment.timeLabel, style: const TextStyle(fontSize: 10, color: AppColors.mutedForeground)),
+                                    ]),
+                                  ),
+                                ),
+                                if (comment.author == 'You')
+                                  IconButton(onPressed: () => context.read<AppState>().deleteCommunityComment(post.id, comment.id), icon: const Icon(Icons.delete_outline, color: AppColors.mutedForeground)),
+                              ],
+                            );
                           },
                         );
                       },
@@ -280,21 +326,29 @@ class _CommunityTabState extends State<CommunityTab> {
                               fontSize: 12, color: AppColors.mutedForeground),
                         ),
                         const Spacer(),
+                        if (_attachedImagePath != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: kIsWeb || _attachedImagePath!.startsWith('http')
+                                ? Image.network(_attachedImagePath!, height: 48, width: 72, fit: BoxFit.cover)
+                                : Image.file(File(_attachedImagePath!), height: 48, width: 72, fit: BoxFit.cover),
+                          ),
+                        IconButton(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.photo_library, color: AppColors.primary),
+                        ),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _postCtrl,
                           builder: (context, value, _) {
                             final canPost = value.text.trim().isNotEmpty;
                             return ElevatedButton(
-                              onPressed:
-                                  canPost ? () => _submitPost(state) : null,
+                              onPressed: (canPost || _attachedImagePath != null) ? () => _submitPost(state) : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
                                 shape: const StadiumBorder(),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 18, vertical: 10),
-                                textStyle: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w600),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                               child: const Text('Post'),
                             );
@@ -446,23 +500,88 @@ class _PostCard extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                const Icon(Icons.more_horiz_rounded,
-                    color: AppColors.mutedForeground),
+                if (post.userName == 'You')
+                  PopupMenuButton<String>(
+                    onSelected: (choice) async {
+                      final app = context.read<AppState>();
+                      final localContext = context;
+                        if (choice == 'edit') {
+                          final ctrl = TextEditingController(text: post.caption);
+                          String? newImage = post.imageUrl;
+                          await showDialog<void>(
+                            context: localContext,
+                            builder: (dctx) => AlertDialog(
+                              title: const Text('Edit post'),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TextField(controller: ctrl),
+                                  const SizedBox(height: 8),
+                                  TextButton.icon(
+                                    onPressed: () async {
+                                      final p = await ImageService.pickFromGallery();
+                                      if (p != null) newImage = p;
+                                    },
+                                    icon: const Icon(Icons.photo_library),
+                                    label: const Text('Change image'),
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('Cancel')),
+                                TextButton(
+                                  onPressed: () async {
+                                    String? imageToSave = newImage;
+                                    if (imageToSave != null && !imageToSave.startsWith('http')) {
+                                      try {
+                                        imageToSave = await StorageService.uploadFile(imageToSave);
+                                      } catch (_) {}
+                                    }
+                                    app.editCommunityPost(post.id, caption: ctrl.text, imageUrl: imageToSave);
+                                    Navigator.pop(dctx);
+                                  },
+                                  child: const Text('Save'),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else if (choice == 'delete') {
+                          final confirmed = await showDialog<bool>(
+                            context: localContext,
+                            builder: (dctx) => AlertDialog(
+                              title: const Text('Delete post?'),
+                              content: const Text('This will remove the post.'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Cancel')),
+                                TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Delete')),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) app.deleteCommunityPost(post.id);
+                        }
+                      },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                    child: const Icon(Icons.more_horiz_rounded, color: AppColors.mutedForeground),
+                  )
+                else
+                  const Icon(Icons.more_horiz_rounded, color: AppColors.mutedForeground),
               ],
             ),
           ),
 
           if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-            Image.network(
-              post.imageUrl!,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 200,
-                color: AppColors.chart4,
-              ),
-            ),
+            (kIsWeb || post.imageUrl!.startsWith('http'))
+                ? Image.network(
+                    post.imageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(height: 200, color: AppColors.chart4),
+                  )
+                : Image.file(File(post.imageUrl!), height: 200, width: double.infinity, fit: BoxFit.cover),
 
           // Caption + actions
           Padding(
@@ -565,53 +684,5 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _CommentTile extends StatelessWidget {
-  final CommunityComment comment;
-  const _CommentTile({required this.comment});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const CircleAvatar(
-          radius: 16,
-          backgroundColor: AppColors.chart3,
-          child: Text('🧑', style: TextStyle(fontSize: 14)),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(comment.author,
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.foreground)),
-                const SizedBox(height: 4),
-                Text(comment.text,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.foreground,
-                        height: 1.3)),
-                const SizedBox(height: 6),
-                Text(comment.timeLabel,
-                    style: const TextStyle(
-                        fontSize: 10, color: AppColors.mutedForeground)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// Removed unused _CommentTile widget.
 
