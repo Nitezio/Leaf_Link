@@ -3,21 +3,24 @@ import '../theme/app_theme.dart';
 
 class WelcomeScreen extends StatelessWidget {
   final VoidCallback onGetStarted;
-  const WelcomeScreen({super.key, required this.onGetStarted});
+  WelcomeScreen({super.key, required this.onGetStarted});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
           final isCompactHeight = constraints.maxHeight < 700;
           final heroHeight = (constraints.maxHeight * 0.45).clamp(180.0, 420.0);
 
-          final hero =
-              _heroImage(height: isWide ? constraints.maxHeight : heroHeight);
+          final hero = _heroImage(
+            context,
+            height: isWide ? constraints.maxHeight : heroHeight,
+          );
           final content = welcomeContent(
+            context,
             onGetStarted: onGetStarted,
             centerAligned: !isWide,
             denseLayout: isCompactHeight,
@@ -31,9 +34,9 @@ class WelcomeScreen extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      padding: EdgeInsets.symmetric(vertical: 24),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 520),
+                        constraints: BoxConstraints(maxWidth: 520),
                         child: content,
                       ),
                     ),
@@ -47,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   hero,
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.only(bottom: 12),
                     child: content,
                   ),
                 ],
@@ -76,7 +79,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _heroImage({required double height}) {
+  Widget _heroImage(BuildContext context, {required double height}) {
     return SizedBox(
       height: height,
       child: Stack(
@@ -87,7 +90,7 @@ class WelcomeScreen extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               color: AppColors.chart4,
-              child: const Icon(Icons.eco, size: 80, color: Colors.white),
+              child: Icon(Icons.eco, size: 80, color: Colors.white),
             ),
           ),
           // Gradient fade into background
@@ -98,10 +101,10 @@ class WelcomeScreen extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppColors.background.withValues(alpha: 0.6),
-                  AppColors.background,
+                  Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.6),
+                  Theme.of(context).scaffoldBackgroundColor,
                 ],
-                stops: const [0.5, 0.8, 1.0],
+                stops: [0.5, 0.8, 1.0],
               ),
             ),
           ),
@@ -110,7 +113,8 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget welcomeContent({
+  Widget welcomeContent(
+    BuildContext context, {
     required VoidCallback onGetStarted,
     required bool centerAligned,
     required bool denseLayout,
@@ -120,19 +124,19 @@ class WelcomeScreen extends StatelessWidget {
         centerAligned ? CrossAxisAlignment.center : CrossAxisAlignment.start;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: crossAxis,
         children: [
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Align(
             alignment: centerAligned ? Alignment.center : Alignment.centerLeft,
             child: Container(
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [AppColors.primary, AppColors.secondary],
@@ -142,25 +146,25 @@ class WelcomeScreen extends StatelessWidget {
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.2),
                     blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    offset: Offset(0, 8),
                   ),
                 ],
               ),
               child:
-                  const Icon(Icons.eco_rounded, size: 44, color: Colors.white),
+                  Icon(Icons.eco_rounded, size: 44, color: Colors.white),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
 
           // Title
           RichText(
             textAlign: textAlign,
-            text: const TextSpan(
+            text: TextSpan(
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 height: 1.2,
-                color: AppColors.foreground,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               children: [
                 TextSpan(text: 'Your Plants,\n'),
@@ -171,12 +175,12 @@ class WelcomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'Smart care, AI insights, and a community\nof plant lovers',
             textAlign: textAlign,
-            style: const TextStyle(
-              color: AppColors.mutedForeground,
+            style: TextStyle(
+              color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
               fontSize: 15,
               height: 1.5,
             ),
@@ -184,11 +188,11 @@ class WelcomeScreen extends StatelessWidget {
           SizedBox(height: denseLayout ? 20 : 28),
 
           // Feature bullets
-          _feature('🌿', 'Track every plant\'s journey'),
-          const SizedBox(height: 14),
-          _feature('💧', 'Weather-smart watering alerts'),
-          const SizedBox(height: 14),
-          _feature('🔬', 'AI disease detection & treatment'),
+          _feature(context, '🌿', 'Track every plant\'s journey'),
+          SizedBox(height: 14),
+          _feature(context, '💧', 'Weather-smart watering alerts'),
+          SizedBox(height: 14),
+          _feature(context, '🔬', 'AI disease detection & treatment'),
 
           SizedBox(height: denseLayout ? 16 : 24),
 
@@ -198,21 +202,21 @@ class WelcomeScreen extends StatelessWidget {
             height: 56,
             child: ElevatedButton.icon(
               onPressed: onGetStarted,
-              icon: const Text(
+              icon: Text(
                 'Get Started',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              label: const Icon(Icons.arrow_forward_rounded, size: 20),
+              label: Icon(Icons.arrow_forward_rounded, size: 20),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+                shape: StadiumBorder(),
                 elevation: 4,
                 shadowColor: AppColors.primary.withValues(alpha: 0.3),
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
 
           // Page indicators
           Align(
@@ -228,14 +232,14 @@ class WelcomeScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                const SizedBox(width: 6),
-                _dot(),
-                const SizedBox(width: 6),
-                _dot(),
+                SizedBox(width: 6),
+                _dot(context),
+                SizedBox(width: 6),
+                _dot(context),
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
         ],
       ),
     );
@@ -249,7 +253,7 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _feature(String emoji, String text) {
+  Widget _feature(BuildContext context, String emoji, String text) {
     return Row(
       children: [
         Container(
@@ -260,15 +264,15 @@ class WelcomeScreen extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child:
-              Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+              Center(child: Text(emoji, style: TextStyle(fontSize: 22))),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.foreground,
+              color: Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -277,12 +281,12 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _dot() {
+  Widget _dot(BuildContext context) {
     return Container(
       width: 6,
       height: 6,
-      decoration: const BoxDecoration(
-        color: AppColors.muted,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
         shape: BoxShape.circle,
       ),
     );

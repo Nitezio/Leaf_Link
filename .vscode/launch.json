@@ -1,0 +1,13 @@
+{
+  // VS Code launch configuration for Flutter that loads environment from .env
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/responsive_body.dart';
 
 class MarketplaceTab extends StatefulWidget {
-  const MarketplaceTab({super.key});
+  MarketplaceTab({super.key});
 
   @override
   State<MarketplaceTab> createState() => _MarketplaceTabState();
@@ -39,8 +39,8 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
@@ -48,7 +48,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           final cart = stateInside.cartItems;
           return SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              padding: EdgeInsets.fromLTRB(16, 10, 16, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -56,29 +56,29 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.muted,
+                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Align(
+                SizedBox(height: 12),
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Cart',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.foreground,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 if (cart.isEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'Your cart is empty. Add a plant to get started.',
-                      style: TextStyle(color: AppColors.mutedForeground),
+                      style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                     ),
                   )
                 else
@@ -86,7 +86,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     child: ListView.separated(
                       shrinkWrap: true,
                       itemCount: cart.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      separatorBuilder: (_, __) => SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final cartItem = cart[index];
                         return _CartRow(
@@ -98,20 +98,20 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                       },
                     ),
                   ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
                         onPressed: cart.isEmpty ? null : stateInside.clearCart,
                         style: OutlinedButton.styleFrom(
-                          shape: const StadiumBorder(),
-                          side: const BorderSide(color: AppColors.border),
+                          shape: StadiumBorder(),
+                          side: BorderSide(color: Theme.of(context).colorScheme.outline),
                         ),
-                        child: const Text('Clear Cart'),
+                        child: Text('Clear Cart'),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
                         onPressed: cart.isEmpty
@@ -122,24 +122,32 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (dctx) => AlertDialog(
-                                    title: const Text('Confirm purchase'),
+                                    title: Text('Confirm purchase'),
                                     content: Text('Buy ${stateInside.cartCount} item(s) from your cart?'),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Cancel')),
-                                      TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Buy')),
+                                      TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text('Cancel')),
+                                      TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text('Buy')),
                                     ],
                                   ),
                                 );
                                 if (confirm == true) {
                                   final ok = stateInside.checkoutCart();
+                                  final receipt = stateInside.latestReceipt;
                                   messenger.showSnackBar(SnackBar(content: Text(ok ? 'Purchase successful' : 'Purchase failed: insufficient stock')));
                                   if (ok) navigator.pop();
+                                  if (ok && receipt != null) {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (mounted) {
+                                        _showReceiptDialog(context, receipt);
+                                      }
+                                    });
+                                  }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          shape: const StadiumBorder(),
+                          shape: StadiumBorder(),
                         ),
                         child: Text('Checkout (${stateInside.cartCount})'),
                       ),
@@ -159,15 +167,15 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
         final inCart = state.isInCart(item.id);
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            padding: EdgeInsets.fromLTRB(16, 10, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,42 +185,42 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.muted,
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(item.emoji, style: const TextStyle(fontSize: 56)),
-                const SizedBox(height: 10),
+                SizedBox(height: 16),
+                Text(item.emoji, style: TextStyle(fontSize: 56)),
+                SizedBox(height: 10),
                 Text(item.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.foreground)),
-                const SizedBox(height: 4),
+                        color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 4),
                 Text('${item.seller} • ${item.rating} ★ • ${item.stock} in stock',
-                    style: const TextStyle(color: AppColors.mutedForeground)),
-                const SizedBox(height: 12),
+                    style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+                SizedBox(height: 12),
                 Text(item.description,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 14,
                         height: 1.4,
-                        color: AppColors.foreground)),
-                const SizedBox(height: 16),
+                        color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          shape: const StadiumBorder(),
-                          side: const BorderSide(color: AppColors.border),
+                          shape: StadiumBorder(),
+                          side: BorderSide(color: Theme.of(context).colorScheme.outline),
                         ),
-                        child: const Text('Close'),
+                        child: Text('Close'),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
@@ -222,7 +230,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          shape: const StadiumBorder(),
+                          shape: StadiumBorder(),
                         ),
                         child: Text(inCart ? 'Add Another' : 'Add to Cart'),
                       ),
@@ -237,6 +245,113 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
     );
   }
 
+  void _showReceiptDialog(BuildContext context, PurchaseReceipt receipt) {
+    showDialog<void>(
+      context: context,
+      builder: (dctx) => AlertDialog(
+        title: Text('Receipt'),
+        content: SizedBox(
+          width: 360,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Purchased: ${receipt.purchasedAt}'),
+                SizedBox(height: 12),
+                for (final line in receipt.items)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 10),
+                    child: Row(
+                      children: [
+                        Text(line.emoji, style: TextStyle(fontSize: 24)),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(line.itemName, style: TextStyle(fontWeight: FontWeight.w600)),
+                              Text('${line.quantity} x ${line.priceLabel}', style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Divider(),
+                Text('Total: ${receipt.totalLabel}', style: TextStyle(fontWeight: FontWeight.w600)),
+                SizedBox(height: 4),
+                Text('Points earned: +${receipt.pointsAwarded}'),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dctx), child: Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  void _showReceiptHistory(BuildContext context, List<PurchaseReceipt> receipts) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, 10, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Receipts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+              ),
+              SizedBox(height: 12),
+              if (receipts.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Text('No purchases yet.', style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: receipts.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final receipt = receipts[index];
+                      return ListTile(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Theme.of(context).colorScheme.outline)),
+                        tileColor: Theme.of(context).cardColor,
+                        title: Text(receipt.totalLabel, style: TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text('${receipt.totalItems} item(s) • ${receipt.purchasedAt}'),
+                        trailing: Text('+${receipt.pointsAwarded}', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary)),
+                        onTap: () => _showReceiptDialog(context, receipt),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -248,17 +363,24 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Marketplace',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.foreground,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => _showReceiptHistory(context, state.purchaseHistory),
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(Icons.receipt_long_outlined, color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ),
                   GestureDetector(
@@ -266,17 +388,17 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.all(8.0),
                           child: Icon(Icons.shopping_cart_outlined,
-                              color: AppColors.foreground),
+                              color: Theme.of(context).colorScheme.onSurface),
                         ),
                         if (state.cartCount > 0)
                           Positioned(
                             right: 0,
                             top: 0,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(
+                              padding: EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.destructive,
@@ -284,7 +406,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                               ),
                               child: Text(
                                 '${state.cartCount}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -301,74 +423,74 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
 
             // Search bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
                 onChanged: (value) => setState(() => _search = value),
                 decoration: InputDecoration(
                   hintText: 'Search plants & supplies…',
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  prefixIcon: Icon(Icons.search_rounded),
                   filled: true,
-                  fillColor: AppColors.card,
+                  fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Category chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: _categories.map((c) {
                   final selected = c == _selectedCategory;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(c),
                       selected: selected,
                       onSelected: (_) => setState(() => _selectedCategory = c),
                       selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
-                        color: selected ? Colors.white : AppColors.foreground,
+                        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
-                      backgroundColor: AppColors.card,
+                      backgroundColor: Theme.of(context).cardColor,
                       side: BorderSide(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : Theme.of(context).colorScheme.outline,
                       ),
                     ),
                   );
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             if (items.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(32),
                 child: Center(
                   child: Text(
                     'No items match your search yet.',
-                    style: TextStyle(color: AppColors.mutedForeground),
+                    style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   ),
                 ),
               )
             else
               GridView.builder(
                 shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                physics: NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
@@ -383,7 +505,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                 ),
               ),
 
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -397,7 +519,7 @@ class _ItemCard extends StatelessWidget {
   final VoidCallback onOpenDetails;
   final bool inCart;
 
-  const _ItemCard({
+  _ItemCard({
     required this.item,
     required this.onAddToCart,
     required this.onOpenDetails,
@@ -408,13 +530,13 @@ class _ItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.07),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -431,7 +553,7 @@ class _ItemCard extends StatelessWidget {
                 height: 110,
                 color: AppColors.chart4,
                 child: Center(
-                  child: Text(item.emoji, style: const TextStyle(fontSize: 52)),
+                  child: Text(item.emoji, style: TextStyle(fontSize: 52)),
                 ),
               ),
             ),
@@ -441,14 +563,14 @@ class _ItemCard extends StatelessWidget {
                   left: 8,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.secondary,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       item.badge!,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: 9,
                           fontWeight: FontWeight.w600),
@@ -459,45 +581,45 @@ class _ItemCard extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
                   onTap: onOpenDetails,
                   child: Text(item.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        color: AppColors.foreground)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: 2),
                 Text(item.seller,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.mutedForeground)),
-                const SizedBox(height: 6),
+                    style: TextStyle(
+                        fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+                SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(item.price,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                             color: AppColors.primary)),
                     Row(
                       children: [
-                        const Icon(Icons.star_rounded,
+                        Icon(Icons.star_rounded,
                             size: 13, color: AppColors.gold),
-                        const SizedBox(width: 2),
+                        SizedBox(width: 2),
                         Text(item.rating,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.mutedForeground)),
+                                color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   height: 32,
@@ -506,12 +628,12 @@ class _ItemCard extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
+                      shape: StadiumBorder(),
                       padding: EdgeInsets.zero,
                     ),
                     child: Text(
                       inCart ? 'Add One More' : 'Add to Cart',
-                      style: const TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12),
                     ),
                   ),
                 ),
@@ -530,7 +652,7 @@ class _CartRow extends StatelessWidget {
   final VoidCallback onRemove;
   final VoidCallback onDelete;
 
-  const _CartRow({
+  _CartRow({
     required this.item,
     required this.onAdd,
     required this.onRemove,
@@ -540,35 +662,35 @@ class _CartRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
-          Text(item.item.emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: 12),
+          Text(item.item.emoji, style: TextStyle(fontSize: 28)),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.item.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.foreground)),
-                const SizedBox(height: 2),
+                        color: Theme.of(context).colorScheme.onSurface)),
+                SizedBox(height: 2),
                 Text(item.item.price,
-                    style: const TextStyle(color: AppColors.mutedForeground)),
+                    style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
               ],
             ),
           ),
-          IconButton(onPressed: onRemove, icon: const Icon(Icons.remove_circle_outline)),
+          IconButton(onPressed: onRemove, icon: Icon(Icons.remove_circle_outline)),
           Text('${item.quantity}',
-              style: const TextStyle(fontWeight: FontWeight.w600)),
-          IconButton(onPressed: onAdd, icon: const Icon(Icons.add_circle_outline)),
-          IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline)),
+              style: TextStyle(fontWeight: FontWeight.w600)),
+          IconButton(onPressed: onAdd, icon: Icon(Icons.add_circle_outline)),
+          IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline)),
         ],
       ),
     );

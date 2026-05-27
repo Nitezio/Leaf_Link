@@ -10,22 +10,23 @@ import 'add_edit_plant_screen.dart';
 class PlantDetailScreen extends StatelessWidget {
   final String plantId;
 
-  const PlantDetailScreen({super.key, required this.plantId});
+  PlantDetailScreen({super.key, required this.plantId});
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final plant = state.getPlant(plantId);
+    final scheduledFor = state.scheduledFor(plantId);
 
     if (plant == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: AppColors.background,
-          foregroundColor: AppColors.foreground,
-          title: const Text('Plant Details'),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          foregroundColor: Theme.of(context).colorScheme.onSurface,
+          title: Text('Plant Details'),
         ),
-        body: const Center(child: Text('Plant not found.')),
+        body: Center(child: Text('Plant not found.')),
       );
     }
 
@@ -36,12 +37,12 @@ class PlantDetailScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.foreground,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        title: const Text('Plant Details'),
+        title: Text('Plant Details'),
         actions: [
           IconButton(
             onPressed: () async {
@@ -50,16 +51,16 @@ class PlantDetailScreen extends StatelessWidget {
               final deleted = await showDialog<bool>(
                 context: context,
                 builder: (dctx) => AlertDialog(
-                  title: const Text('Delete plant?'),
-                  content: const Text('This will remove the plant from your garden.'),
+                  title: Text('Delete plant?'),
+                  content: Text('This will remove the plant from your garden.'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(dctx, false),
-                      child: const Text('Cancel'),
+                      child: Text('Cancel'),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(dctx, true),
-                      child: const Text('Delete'),
+                      child: Text('Delete'),
                     ),
                   ],
                 ),
@@ -69,13 +70,13 @@ class PlantDetailScreen extends StatelessWidget {
                 if (navigator.mounted) navigator.pop();
               }
             },
-            icon: const Icon(Icons.delete_outline),
+            icon: Icon(Icons.delete_outline),
           ),
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -89,7 +90,7 @@ class PlantDetailScreen extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: AppColors.chart4,
-                            child: const Icon(Icons.eco, size: 60, color: Colors.white),
+                            child: Icon(Icons.eco, size: 60, color: Colors.white),
                           ),
                         )
                       : Image.file(
@@ -97,90 +98,93 @@ class PlantDetailScreen extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: AppColors.chart4,
-                            child: const Icon(Icons.eco, size: 60, color: Colors.white),
+                            child: Icon(Icons.eco, size: 60, color: Colors.white),
                           ),
                         ),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(plant.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.foreground)),
-              const SizedBox(height: 4),
+                      color: Theme.of(context).colorScheme.onSurface)),
+              SizedBox(height: 4),
               Text(plant.species,
-                  style: const TextStyle(
-                      fontSize: 14, color: AppColors.mutedForeground)),
-              const SizedBox(height: 16),
+                  style: TextStyle(
+                      fontSize: 14, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+              SizedBox(height: 16),
               Row(
                 children: [
-                  _statChip('Status', statusLabel),
-                  const SizedBox(width: 10),
-                  _statChip('Level', 'Lv ${plant.level}'),
-                  const SizedBox(width: 10),
-                  _statChip('Water', plant.nextWatering),
+                  _statChip(context, 'Status', statusLabel),
+                  SizedBox(width: 10),
+                  _statChip(context, 'Level', 'Lv ${plant.level}'),
+                  SizedBox(width: 10),
+                  _statChip(context, 'Water', plant.nextWatering),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               _panel(
+                context,
                 title: 'Notes',
                 child: Text(
                   plant.notes.isEmpty ? 'No notes saved yet.' : plant.notes,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.4,
-                    color: AppColors.foreground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _panel(
+                context,
                 title: 'Care Info',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Last watered: ${plant.lastWatered}'),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text('Next watering: ${plant.nextWatering}'),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _panel(
+                context,
                 title: 'Care History',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (plant.careHistory.isEmpty)
-                      const Text('No care events yet.'),
+                      Text('No care events yet.'),
                     for (final e in plant.careHistory)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
                               e.type == 'water' ? Icons.opacity : Icons.note,
-                              color: AppColors.mutedForeground,
+                              color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(e.type == 'water' ? 'Watered' : e.type,
-                                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 4),
-                                  Text(e.note ?? '', style: const TextStyle(color: AppColors.foreground)),
-                                  const SizedBox(height: 4),
-                                  Text(e.timestamp, style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+                                      style: TextStyle(fontWeight: FontWeight.w600)),
+                                  SizedBox(height: 4),
+                                  Text(e.note ?? '', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                                  SizedBox(height: 4),
+                                  Text(e.timestamp, style: TextStyle(fontSize: 12, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                                 ],
                               ),
                             ),
                             if (e.photoPath != null)
                               Padding(
-                                padding: const EdgeInsets.only(left: 8),
+                                padding: EdgeInsets.only(left: 8),
                                 child: SizedBox(
                                   width: 64,
                                   height: 64,
@@ -195,7 +199,29 @@ class PlantDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
+              if (scheduledFor != null)
+                SizedBox(height: 8),
+              if (scheduledFor != null)
+                _panel(
+                  context,
+                  title: 'Reminder',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Scheduled for: ${scheduledFor.toLocal()}'),
+                      SizedBox(height: 10),
+                      OutlinedButton(
+                        onPressed: () => context.read<AppState>().cancelScheduledWatering(plant.id),
+                        style: OutlinedButton.styleFrom(
+                          shape: StadiumBorder(),
+                          side: BorderSide(color: Theme.of(context).colorScheme.outline),
+                        ),
+                        child: Text('Cancel Reminder'),
+                      ),
+                    ],
+                  ),
+                ),
               Row(
                 children: [
                   Expanded(
@@ -209,49 +235,45 @@ class PlantDetailScreen extends StatelessWidget {
                         );
                       },
                       style: OutlinedButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        side: const BorderSide(color: AppColors.border),
+                        shape: StadiumBorder(),
+                        side: BorderSide(color: Theme.of(context).colorScheme.outline),
                       ),
-                      child: const Text('Edit Plant'),
+                      child: Text('Edit Plant'),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
                         context.read<AppState>().waterPlant(plant.id);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Plant watered! +50 XP 🌱')),
+                          SnackBar(content: Text('Plant watered! +50 XP 🌱')),
                         );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        shape: const StadiumBorder(),
+                        shape: StadiumBorder(),
                       ),
-                      child: const Text('Water Now'),
+                      child: Text('Water Now'),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   OutlinedButton(
-                    // ignore: use_build_context_synchronously
                     onPressed: () async {
                       final appState = context.read<AppState>();
                       final messenger = ScaffoldMessenger.of(context);
-                      final ctx = context;
                       // schedule a watering reminder: pick date then time
-                      // ignore: use_build_context_synchronously
                       final date = await showDatePicker(
-                        context: ctx,
-                        initialDate: DateTime.now().add(const Duration(days: 1)),
+                        context: context,
+                        initialDate: DateTime.now().add(Duration(days: 1)),
                         firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        lastDate: DateTime.now().add(Duration(days: 365)),
                       );
                       if (date == null) return;
-                      // ignore: use_build_context_synchronously
                       final time = await showTimePicker(
-                        context: ctx,
-                        initialTime: const TimeOfDay(hour: 9, minute: 0),
+                        context: context,
+                        initialTime: TimeOfDay(hour: 9, minute: 0),
                       );
                       if (time == null) return;
                       final scheduled = DateTime(date.year, date.month, date.day, time.hour, time.minute);
@@ -259,10 +281,10 @@ class PlantDetailScreen extends StatelessWidget {
                       messenger.showSnackBar(SnackBar(content: Text('Reminder scheduled for ${scheduled.toLocal()}')));
                     },
                     style: OutlinedButton.styleFrom(
-                      shape: const StadiumBorder(),
-                      side: const BorderSide(color: AppColors.border),
+                      shape: StadiumBorder(),
+                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
                     ),
-                    child: const Text('Schedule Reminder'),
+                    child: Text(scheduledFor == null ? 'Schedule Reminder' : 'Reschedule Reminder'),
                   ),
                 ],
               ),
@@ -273,49 +295,49 @@ class PlantDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _statChip(String label, String value) {
+  Widget _statChip(BuildContext context, String label, String value) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: const TextStyle(
-                    fontSize: 11, color: AppColors.mutedForeground)),
-            const SizedBox(height: 4),
+                style: TextStyle(
+                    fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
+            SizedBox(height: 4),
             Text(value,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: AppColors.foreground)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           ],
         ),
       ),
     );
   }
 
-  Widget _panel({required String title, required Widget child}) {
+  Widget _panel(BuildContext context, {required String title, required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.foreground)),
-          const SizedBox(height: 10),
+                  color: Theme.of(context).colorScheme.onSurface)),
+          SizedBox(height: 10),
           child,
         ],
       ),

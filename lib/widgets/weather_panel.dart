@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WeatherPanel extends StatelessWidget {
-  const WeatherPanel({super.key});
+  WeatherPanel({super.key});
 
   static const _forecast = [
     {'day': 'Mon', 'icon': '☀️', 'rain': 0},
@@ -15,9 +15,9 @@ class WeatherPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     // Partly cloudy → grey gradient
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [Color(0xFF6B7280), Color(0xFF9CA3AF)],
@@ -25,16 +25,16 @@ class WeatherPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF52B788).withValues(alpha: 0.25),
+            color: Color(0xFF52B788).withValues(alpha: 0.25),
             blurRadius: 16,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
           // Top row
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
@@ -81,37 +81,37 @@ class WeatherPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Color(0x33FFFFFF), thickness: 1),
-          const SizedBox(height: 12),
+          SizedBox(height: 16),
+          Divider(color: Color(0x33FFFFFF), thickness: 1),
+          SizedBox(height: 12),
 
           // 5-day forecast
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
             child: Text('5-Day Forecast',
                 style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12)),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: _forecast.map((d) {
               return Column(
                 children: [
                   Text(d['day'] as String,
-                      style: const TextStyle(color: Color(0xB3FFFFFF), fontSize: 11)),
-                  const SizedBox(height: 6),
-                  Text(d['icon'] as String, style: const TextStyle(fontSize: 20)),
+                      style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 11)),
+                  SizedBox(height: 6),
+                  Text(d['icon'] as String, style: TextStyle(fontSize: 20)),
                   if ((d['rain'] as int) > 0) ...[
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${d['rain']}mm',
-                        style: const TextStyle(color: Colors.white, fontSize: 10),
+                        style: TextStyle(color: Colors.white, fontSize: 10),
                       ),
                     ),
                   ],
@@ -119,17 +119,17 @@ class WeatherPanel extends StatelessWidget {
               );
             }).toList(),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
 
           // Rain alert
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Text('☔', style: TextStyle(fontSize: 16)),
                 SizedBox(width: 8),

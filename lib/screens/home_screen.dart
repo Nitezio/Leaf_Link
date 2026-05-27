@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+// theme import not required here
 import 'home_tab.dart';
 import 'scan_tab.dart';
 import 'community_tab.dart';
@@ -7,7 +7,7 @@ import 'marketplace_tab.dart';
 import 'profile_tab.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,13 +21,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return HomeTab(onGoToScan: () => setState(() => _activeTab = 2));
       case 1:
-        return const CommunityTab();
+        return CommunityTab();
       case 2:
-        return const ScanTab();
+        return ScanTab();
       case 3:
-        return const MarketplaceTab();
+        return MarketplaceTab();
       case 4:
-        return const ProfileTab();
+        return ProfileTab();
       default:
         return HomeTab(onGoToScan: () => setState(() => _activeTab = 2));
     }
@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(bottom: false, child: _buildTab()),
       bottomNavigationBar: _BottomNav(
         activeTab: _activeTab,
@@ -50,15 +50,15 @@ class _BottomNav extends StatelessWidget {
   final int activeTab;
   final ValueChanged<int> onTap;
 
-  const _BottomNav({required this.activeTab, required this.onTap});
+  _BottomNav({required this.activeTab, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 80 + MediaQuery.of(context).padding.bottom,
-      decoration: const BoxDecoration(
-        color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline)),
       ),
       child: Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
@@ -76,39 +76,39 @@ class _BottomNav extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    _navBtn(0, Icons.home_outlined, Icons.home_rounded, 'Home'),
-                    _navBtn(1, Icons.group_outlined, Icons.group_rounded,
+                    _navBtn(context, 0, Icons.home_outlined, Icons.home_rounded, 'Home'),
+                    _navBtn(context, 1, Icons.group_outlined, Icons.group_rounded,
                         'Community'),
 
                     // Center FAB
                     GestureDetector(
                       onTap: () => onTap(2),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: Duration(milliseconds: 200),
                         width: 56,
                         height: 56,
-                        margin: const EdgeInsets.only(bottom: 8),
+                        margin: EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: activeTab == 2
-                              ? AppColors.secondary
-                              : AppColors.primary,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                            color: activeTab == 2
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.25),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
                         ),
-                        child: const Icon(Icons.camera_alt_rounded,
+                        child: Icon(Icons.camera_alt_rounded,
                             color: Colors.white, size: 24),
                       ),
                     ),
 
-                    _navBtn(3, Icons.shopping_bag_outlined,
+                    _navBtn(context, 3, Icons.shopping_bag_outlined,
                         Icons.shopping_bag_rounded, 'Market'),
-                    _navBtn(4, Icons.person_outline_rounded,
+                    _navBtn(context, 4, Icons.person_outline_rounded,
                         Icons.person_rounded, 'Profile'),
                   ],
                 ),
@@ -120,16 +120,16 @@ class _BottomNav extends StatelessWidget {
     );
   }
 
-  Widget _navBtn(int idx, IconData icon, IconData activeIcon, String label) {
+  Widget _navBtn(BuildContext context, int idx, IconData icon, IconData activeIcon, String label) {
     final isActive = activeTab == idx;
     return GestureDetector(
       onTap: () => onTap(idx),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        duration: Duration(milliseconds: 150),
+        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? AppColors.secondary.withValues(alpha: 0.1)
+              ? Theme.of(context).colorScheme.secondary.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
         ),
@@ -139,15 +139,15 @@ class _BottomNav extends StatelessWidget {
             Icon(
               isActive ? activeIcon : icon,
               size: 22,
-              color: isActive ? AppColors.primary : AppColors.mutedForeground,
+              color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodySmall?.color,
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: isActive ? AppColors.primary : AppColors.mutedForeground,
+                color: isActive ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodySmall?.color,
               ),
             ),
           ],

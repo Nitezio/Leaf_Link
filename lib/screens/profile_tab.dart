@@ -7,7 +7,7 @@ import '../widgets/responsive_body.dart';
 import 'settings_screen.dart';
 
 class ProfileTab extends StatefulWidget {
-  const ProfileTab({super.key});
+  ProfileTab({super.key});
 
   @override
   State<ProfileTab> createState() => _ProfileTabState();
@@ -18,7 +18,7 @@ class _ProfileTabState extends State<ProfileTab> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final stats = state.userStats;
-    const nextLevel = 500;
+    final nextLevel = 500;
     final progress = (stats.points % nextLevel) / nextLevel;
 
     return ResponsiveBody(
@@ -27,7 +27,7 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             // Profile header (dark green)
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              padding: EdgeInsets.fromLTRB(16, 24, 16, 24),
               color: AppColors.primary,
               child: Column(
                 children: [
@@ -36,23 +36,23 @@ class _ProfileTabState extends State<ProfileTab> {
                       Container(
                         width: 72,
                         height: 72,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.secondary,
                           shape: BoxShape.circle,
                         ),
                         child: Center(
                           child: Text(state.profileEmoji,
-                              style: const TextStyle(fontSize: 32)),
+                              style: TextStyle(fontSize: 32)),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               state.profileName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ class _ProfileTabState extends State<ProfileTab> {
                             ),
                             Text(
                               'Level ${stats.level} Gardener',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   color: Color(0xCCFFFFFF), fontSize: 13),
                             ),
                           ],
@@ -71,11 +71,11 @@ class _ProfileTabState extends State<ProfileTab> {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const SettingsScreen(),
+                              builder: (_) => SettingsScreen(),
                             ),
                           );
                         },
-                        icon: const Icon(Icons.settings_outlined,
+                        icon: Icon(Icons.settings_outlined,
                             color: Colors.white, size: 20),
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white.withValues(alpha: 0.1),
@@ -83,11 +83,11 @@ class _ProfileTabState extends State<ProfileTab> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
 
                   // Level progress card
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -98,18 +98,18 @@ class _ProfileTabState extends State<ProfileTab> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Level ${stats.level}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500)),
                             Text('Level ${stats.level + 1}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500)),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -117,13 +117,13 @@ class _ProfileTabState extends State<ProfileTab> {
                             minHeight: 8,
                             backgroundColor: Colors.white.withValues(alpha: 0.2),
                             valueColor:
-                                const AlwaysStoppedAnimation(Colors.white),
+                                AlwaysStoppedAnimation(Colors.white),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         Text(
                           '${nextLevel - (stats.points % nextLevel)} XP to next level',
-                          style: const TextStyle(
+                          style: TextStyle(
                               color: Color(0xB3FFFFFF), fontSize: 11),
                         ),
                       ],
@@ -135,33 +135,33 @@ class _ProfileTabState extends State<ProfileTab> {
 
             // Stats
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(
                 children: [
                   _statCard(
                       Icons.eco_rounded, '${state.plants.length}', 'Plants'),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   _statCard(
                       Icons.trending_up_rounded, '${stats.points}', 'Points'),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   _statCard(Icons.calendar_today_rounded, '${stats.streak}',
                       'Day Streak'),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Vacation mode
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
                   GestureDetector(
                     onTap: () => state.setVacationMode(!state.vacationMode),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [AppColors.secondary, AppColors.primary],
                         ),
                         borderRadius: BorderRadius.circular(24),
@@ -169,7 +169,7 @@ class _ProfileTabState extends State<ProfileTab> {
                           BoxShadow(
                             color: AppColors.secondary.withValues(alpha: 0.25),
                             blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            offset: Offset(0, 4),
                           ),
                         ],
                       ),
@@ -182,11 +182,11 @@ class _ProfileTabState extends State<ProfileTab> {
                               color: Colors.white.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.flight_rounded,
+                            child: Icon(Icons.flight_rounded,
                                 color: Colors.white, size: 24),
                           ),
-                          const SizedBox(width: 12),
-                          const Expanded(
+                          SizedBox(width: 12),
+                          Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -214,17 +214,17 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                   ),
                   if (state.vacationMode) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     _VacationPanel(),
                   ],
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Gamification
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: GamificationPanel(
                 points: stats.points,
                 level: stats.level,
@@ -232,22 +232,22 @@ class _ProfileTabState extends State<ProfileTab> {
                 badges: stats.badges,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Sign out
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 32),
               child: Container(
                 width: double.infinity,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withValues(alpha: 0.06),
                       blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
@@ -255,9 +255,9 @@ class _ProfileTabState extends State<ProfileTab> {
                   onPressed: () async {
                     await context.read<AppState>().signOutLocal();
                   },
-                  icon: const Icon(Icons.logout_rounded,
+                  icon: Icon(Icons.logout_rounded,
                       color: AppColors.destructive),
-                  label: const Text(
+                  label: Text(
                     'Sign Out',
                     style: TextStyle(
                         color: AppColors.destructive,
@@ -275,30 +275,30 @@ class _ProfileTabState extends State<ProfileTab> {
   Widget _statCard(IconData icon, String value, String label) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.06),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
         child: Column(
           children: [
             Icon(icon, color: AppColors.secondary, size: 22),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(value,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.foreground)),
+                    color: Theme.of(context).colorScheme.onSurface)),
             Text(label,
-                style: const TextStyle(
-                    fontSize: 10, color: AppColors.mutedForeground)),
+                style: TextStyle(
+                    fontSize: 10, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
           ],
         ),
       ),
@@ -310,43 +310,43 @@ class _VacationPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Share Garden Access',
             style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
-                color: AppColors.foreground),
+                color: Theme.of(context).colorScheme.onSurface),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           Container(
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 SizedBox(width: 14),
                 Icon(Icons.mail_outline_rounded,
-                    size: 18, color: AppColors.mutedForeground),
+                    size: 18, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                 SizedBox(width: 8),
                 Text("Friend's email address",
                     style: TextStyle(
-                        color: AppColors.mutedForeground, fontSize: 13)),
+                        color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)), fontSize: 13)),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             height: 44,
@@ -355,9 +355,9 @@ class _VacationPanel extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondary,
                 foregroundColor: Colors.white,
-                shape: const StadiumBorder(),
+                shape: StadiumBorder(),
               ),
-              child: const Text('Send Invite'),
+              child: Text('Send Invite'),
             ),
           ),
         ],

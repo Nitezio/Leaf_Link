@@ -5,11 +5,14 @@ import 'package:plantcare_pro/main.dart';
 import 'package:provider/provider.dart';
 
 import 'package:plantcare_pro/models/app_state.dart';
+import 'fakes/fake_flutter_local_notifications.dart';
+import 'package:plantcare_pro/services/notification_service.dart';
 
 Future<void> _pumpApp(WidgetTester tester) async {
   // Create an AppState instance and mark as logged in for deterministic tests.
   final appState = AppState();
   appState.isLoggedIn = true;
+  NotificationService.instance.setTestPlugin(FakeFlutterLocalNotificationsPlugin());
   await tester.pumpWidget(
     ChangeNotifierProvider.value(
       value: appState,

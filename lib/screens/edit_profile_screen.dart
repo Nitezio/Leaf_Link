@@ -4,7 +4,7 @@ import '../models/app_state.dart';
 import '../theme/app_theme.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({super.key});
+  EditProfileScreen({super.key});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -42,66 +42,66 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.foreground,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
-        title: const Text('Edit Profile'),
+        title: Text('Edit Profile'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Form(
             key: _formKey,
             child: Column(
               children: [
                 TextFormField(
                   controller: _nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Display name'),
+                  decoration: InputDecoration(labelText: 'Display name'),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Required';
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 TextFormField(
                   controller: _emojiCtrl,
-                  decoration: const InputDecoration(labelText: 'Avatar emoji'),
+                  decoration: InputDecoration(labelText: 'Avatar emoji'),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Required';
                     return null;
                   },
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 Container(
-                  padding: const EdgeInsets.all(18),
+                  padding: EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppColors.card,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: Row(
                     children: [
                       Text(
                         _emojiCtrl.text.isEmpty ? '🌿' : _emojiCtrl.text,
-                        style: const TextStyle(fontSize: 38),
+                        style: TextStyle(fontSize: 38),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           _nameCtrl.text.isEmpty ? 'Plant Parent' : _nameCtrl.text,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.foreground,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -110,9 +110,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
+                      shape: StadiumBorder(),
                     ),
-                    child: const Text('Save Profile'),
+                    child: Text('Save Profile'),
                   ),
                 ),
               ],

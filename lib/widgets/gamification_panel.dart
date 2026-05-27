@@ -8,7 +8,7 @@ class GamificationPanel extends StatelessWidget {
   final int streak;
   final List<Badge> badges;
 
-  const GamificationPanel({
+  GamificationPanel({
     super.key,
     required this.points,
     required this.level,
@@ -18,18 +18,18 @@ class GamificationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const nextLevelPoints = 500;
+    final nextLevelPoints = 500;
     final progress = (points % nextLevelPoints) / nextLevelPoints;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -38,13 +38,13 @@ class GamificationPanel extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [AppColors.gold, AppColors.secondary],
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.emoji_events_rounded, color: Colors.white, size: 24),
                 SizedBox(width: 8),
@@ -61,7 +61,7 @@ class GamificationPanel extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               children: [
                 // Level ring + progress
@@ -76,57 +76,57 @@ class GamificationPanel extends StatelessWidget {
                           CircularProgressIndicator(
                             value: progress,
                             strokeWidth: 6,
-                            backgroundColor: AppColors.muted,
-                            valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                            backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                            valueColor: AlwaysStoppedAnimation(AppColors.secondary),
                           ),
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 '$level',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.foreground,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Level',
-                                style: TextStyle(fontSize: 10, color: AppColors.mutedForeground),
+                                style: TextStyle(fontSize: 10, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Level $level',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.foreground,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8),
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: progress,
                               minHeight: 8,
-                              backgroundColor: AppColors.muted,
-                              valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                              valueColor: AlwaysStoppedAnimation(AppColors.secondary),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Text(
                             '${nextLevelPoints - (points % nextLevelPoints)} XP to Level ${level + 1}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.mutedForeground,
+                              color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                             ),
                           ),
                         ],
@@ -134,13 +134,14 @@ class GamificationPanel extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
 
                 // Stats grid
                 Row(
                   children: [
                     Expanded(
                       child: _statCard(
+                        context: context,
                         icon: Icons.star_rounded,
                         iconColor: AppColors.gold,
                         label: 'Points',
@@ -151,9 +152,10 @@ class GamificationPanel extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: _statCard(
+                        context: context,
                         icon: Icons.bolt_rounded,
                         iconColor: AppColors.secondary,
                         label: 'Streak',
@@ -166,32 +168,32 @@ class GamificationPanel extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Badges
                 Row(
                   children: [
-                    const Icon(Icons.military_tech_rounded, size: 20, color: AppColors.secondary),
-                    const SizedBox(width: 6),
-                    const Text(
+                    Icon(Icons.military_tech_rounded, size: 20, color: AppColors.secondary),
+                    SizedBox(width: 6),
+                    Text(
                       'Badges',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.foreground),
+                      style: TextStyle(fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                     ),
-                    const Spacer(),
+                    Spacer(),
                     Text(
                       '${badges.where((b) => b.unlocked).length}/${badges.length}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+                      style: TextStyle(fontSize: 12, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 GridView.count(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: NeverScrollableScrollPhysics(),
                   crossAxisCount: 4,
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  children: badges.map((b) => _badgeTile(b)).toList(),
+                  children: badges.map((b) => _badgeTile(context, b)).toList(),
                 ),
               ],
             ),
@@ -202,6 +204,7 @@ class GamificationPanel extends StatelessWidget {
   }
 
   Widget _statCard({
+    required BuildContext context,
     required IconData icon,
     required Color iconColor,
     required String label,
@@ -209,7 +212,7 @@ class GamificationPanel extends StatelessWidget {
     required List<Color> gradientColors,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: gradientColors),
         borderRadius: BorderRadius.circular(20),
@@ -226,17 +229,17 @@ class GamificationPanel extends StatelessWidget {
                 decoration: BoxDecoration(shape: BoxShape.circle, color: iconColor),
                 child: Icon(icon, color: Colors.white, size: 16),
               ),
-              const SizedBox(width: 8),
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.mutedForeground)),
+              SizedBox(width: 8),
+              Text(label, style: TextStyle(fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppColors.foreground,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -244,9 +247,9 @@ class GamificationPanel extends StatelessWidget {
     );
   }
 
-  Widget _badgeTile(Badge badge) {
+  Widget _badgeTile(BuildContext context, Badge badge) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(8),
       decoration: BoxDecoration(
         gradient: badge.unlocked
             ? LinearGradient(
@@ -256,7 +259,7 @@ class GamificationPanel extends StatelessWidget {
                 ],
               )
             : null,
-        color: badge.unlocked ? null : AppColors.muted,
+        color: badge.unlocked ? null : Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: badge.unlocked ? AppColors.gold.withValues(alpha: 0.4) : Colors.transparent,
@@ -268,16 +271,16 @@ class GamificationPanel extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(badge.icon, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 2),
+            Text(badge.icon, style: TextStyle(fontSize: 22)),
+            SizedBox(height: 2),
             Text(
               badge.name,
               textAlign: TextAlign.center,
               maxLines: 2,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.w600,
-                color: AppColors.foreground,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],

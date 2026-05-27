@@ -190,6 +190,9 @@ class CommunityPost {
   int commentCount;
   bool likedByMe;
   bool bookmarked;
+  bool reportedByMe;
+  int reportCount;
+  bool hidden;
   final List<CommunityComment> comments;
 
   CommunityPost({
@@ -202,6 +205,9 @@ class CommunityPost {
     required this.commentCount,
     required this.likedByMe,
     required this.bookmarked,
+    this.reportedByMe = false,
+    this.reportCount = 0,
+    this.hidden = false,
     required this.comments,
     this.imageUrl,
   });
@@ -218,6 +224,9 @@ class CommunityPost {
       'commentCount': commentCount,
       'likedByMe': likedByMe,
       'bookmarked': bookmarked,
+      'reportedByMe': reportedByMe,
+      'reportCount': reportCount,
+      'hidden': hidden,
       'comments': comments.map((c) => c.toMap()).toList(),
     };
   }
@@ -235,6 +244,9 @@ class CommunityPost {
       commentCount: map['commentCount'] as int,
       likedByMe: map['likedByMe'] as bool,
       bookmarked: map['bookmarked'] as bool,
+        reportedByMe: (map['reportedByMe'] as bool?) ?? false,
+      reportCount: (map['reportCount'] as int?) ?? 0,
+      hidden: (map['hidden'] as bool?) ?? false,
       comments: rawComments
           .map((c) => CommunityComment.fromMap(Map<String, dynamic>.from(c as Map)))
           .toList(),
@@ -271,6 +283,83 @@ class CartItem {
   int quantity;
 
   CartItem({required this.item, required this.quantity});
+}
+
+class ReceiptLine {
+  final String itemId;
+  final String itemName;
+  final String emoji;
+  final String priceLabel;
+  final int quantity;
+
+  ReceiptLine({
+    required this.itemId,
+    required this.itemName,
+    required this.emoji,
+    required this.priceLabel,
+    required this.quantity,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'itemId': itemId,
+      'itemName': itemName,
+      'emoji': emoji,
+      'priceLabel': priceLabel,
+      'quantity': quantity,
+    };
+  }
+
+  factory ReceiptLine.fromMap(Map<String, dynamic> map) {
+    return ReceiptLine(
+      itemId: map['itemId'] as String,
+      itemName: map['itemName'] as String,
+      emoji: map['emoji'] as String,
+      priceLabel: map['priceLabel'] as String,
+      quantity: (map['quantity'] as num).toInt(),
+    );
+  }
+}
+
+class PurchaseReceipt {
+  final String id;
+  final String purchasedAt;
+  final List<ReceiptLine> items;
+  final String totalLabel;
+  final int pointsAwarded;
+
+  PurchaseReceipt({
+    required this.id,
+    required this.purchasedAt,
+    required this.items,
+    required this.totalLabel,
+    required this.pointsAwarded,
+  });
+
+  int get totalItems => items.fold<int>(0, (sum, line) => sum + line.quantity);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'purchasedAt': purchasedAt,
+      'items': items.map((item) => item.toMap()).toList(),
+      'totalLabel': totalLabel,
+      'pointsAwarded': pointsAwarded,
+    };
+  }
+
+  factory PurchaseReceipt.fromMap(Map<String, dynamic> map) {
+    final rawItems = map['items'] as List<dynamic>? ?? [];
+    return PurchaseReceipt(
+      id: map['id'] as String,
+      purchasedAt: map['purchasedAt'] as String,
+      items: rawItems
+          .map((item) => ReceiptLine.fromMap(Map<String, dynamic>.from(item as Map)))
+          .toList(),
+      totalLabel: map['totalLabel'] as String,
+      pointsAwarded: (map['pointsAwarded'] as num).toInt(),
+    );
+  }
 }
 
 class ScanResult {

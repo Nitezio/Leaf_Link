@@ -10,7 +10,7 @@ import 'plant_detail_screen.dart';
 
 class HomeTab extends StatelessWidget {
   final VoidCallback onGoToScan;
-  const HomeTab({super.key, required this.onGoToScan});
+  HomeTab({super.key, required this.onGoToScan});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class HomeTab extends StatelessWidget {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
               child: Row(
                 children: [
                   // Logo + greeting
@@ -31,7 +31,7 @@ class HomeTab extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [AppColors.primary, AppColors.secondary],
@@ -41,43 +41,43 @@ class HomeTab extends StatelessWidget {
                         BoxShadow(
                           color: AppColors.primary.withValues(alpha: 0.15),
                           blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.eco_rounded,
+                    child: Icon(Icons.eco_rounded,
                         color: Colors.white, size: 28),
                   ),
-                  const SizedBox(width: 12),
-                  const Column(
+                  SizedBox(width: 12),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Good Morning',
                           style: TextStyle(
-                              fontSize: 13, color: AppColors.mutedForeground)),
+                              fontSize: 13, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                       Text(
                         'Welcome back!',
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.foreground,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  _iconBtn(Icons.search_rounded),
-                  const SizedBox(width: 8),
+                  Spacer(),
+                  _iconBtn(context, Icons.search_rounded),
+                  SizedBox(width: 8),
                   Stack(
                     children: [
-                      _iconBtn(Icons.notifications_none_rounded),
+                      _iconBtn(context, Icons.notifications_none_rounded),
                       Positioned(
                         top: 4,
                         right: 4,
                         child: Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.destructive,
                             shape: BoxShape.circle,
                           ),
@@ -91,64 +91,65 @@ class HomeTab extends StatelessWidget {
 
             // Stats row
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   Expanded(
                     child: _statCard(
+                      context,
                       '${state.plants.length}',
                       'Plants',
                       onTap: () async {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const GardenTab(),
+                            builder: (_) => GardenTab(),
                           ),
                         );
                       },
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
-                    child: _statCard('${state.userStats.streak}', 'Day Streak'),
+                    child: _statCard(context, '${state.userStats.streak}', 'Day Streak'),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
-                    child: _statCard('${state.userStats.level}', 'Level'),
+                    child: _statCard(context, '${state.userStats.level}', 'Level'),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // Weather
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: WeatherPanel(),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
 
             // Plants
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Your Plants',
                 style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.foreground),
+                    color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             ...state.plants.map((plant) => Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: PlantCard(
                     plant: plant,
                     onWater: (id) {
                       state.waterPlant(id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Plant watered! +50 XP 🌱'),
+                          content: Text('Plant watered! +50 XP 🌱'),
                           backgroundColor: AppColors.secondary,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
@@ -169,32 +170,34 @@ class HomeTab extends StatelessWidget {
                 )),
 
             // Quick actions
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: Text(
                 'Quick Actions',
                 style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.mutedForeground),
+                    color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: Row(
                 children: [
                   Expanded(
                     child: _quickAction(
+                      context: context,
                       icon: Icons.camera_alt_outlined,
                       title: 'AR Preview',
                       sub: 'Place plants in AR',
                       onTap: onGoToScan,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: _quickAction(
+                      context: context,
                       icon: Icons.trending_up_rounded,
                       title: 'Growth Predict',
                       sub: 'See future growth',
@@ -210,45 +213,45 @@ class HomeTab extends StatelessWidget {
     );
   }
 
-  static Widget _iconBtn(IconData icon) {
+  static Widget _iconBtn(BuildContext context, IconData icon) {
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
-      child: Icon(icon, size: 20, color: AppColors.mutedForeground),
+      child: Icon(icon, size: 20, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
     );
   }
 
-  static Widget _statCard(String value, String label, {VoidCallback? onTap}) {
+  static Widget _statCard(BuildContext context, String value, String label, {VoidCallback? onTap}) {
     final card = Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         children: [
           Text(value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppColors.foreground,
+                color: Theme.of(context).colorScheme.onSurface,
               )),
-          const SizedBox(height: 2),
+          SizedBox(height: 2),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: AppColors.mutedForeground)),
+              style: TextStyle(
+                  fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
         ],
       ),
     );
@@ -257,6 +260,7 @@ class HomeTab extends StatelessWidget {
   }
 
   static Widget _quickAction({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String sub,
@@ -265,15 +269,15 @@ class HomeTab extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.06),
               blurRadius: 8,
-              offset: const Offset(0, 2),
+              offset: Offset(0, 2),
             ),
           ],
         ),
@@ -289,17 +293,17 @@ class HomeTab extends StatelessWidget {
               ),
               child: Icon(icon, color: AppColors.secondary, size: 22),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: AppColors.foreground,
+                  color: Theme.of(context).colorScheme.onSurface,
                 )),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(sub,
-                style: const TextStyle(
-                    fontSize: 11, color: AppColors.mutedForeground)),
+                style: TextStyle(
+                    fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
           ],
         ),
       ),

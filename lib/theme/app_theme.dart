@@ -85,4 +85,63 @@ class AppTheme {
     );
     return base;
   }
+
+  static ThemeData get darkTheme {
+    final base = ThemeData(
+      useMaterial3: true,
+      colorScheme: const ColorScheme.dark(
+        surface: Color(0xFF121212),
+        primary: Color(0xFF9BE7B5),
+        secondary: Color(0xFF66C69A),
+        error: Color(0xFFEF9A9A),
+        onPrimary: Color(0xFF052013),
+        onSecondary: Color(0xFF052013),
+        onSurface: Color(0xFFE6F6EE),
+        outline: Color(0x334D6654),
+      ),
+      scaffoldBackgroundColor: const Color(0xFF0F1720),
+      cardColor: const Color(0xFF111827),
+      textTheme: GoogleFonts.interTextTheme().copyWith(
+        bodyLarge: GoogleFonts.inter(color: Color(0xFFE6F6EE)),
+        bodyMedium: GoogleFonts.inter(color: Color(0xFFE6F6EE)),
+        bodySmall: GoogleFonts.inter(color: Color(0xFF9BBFAF)),
+        titleLarge: GoogleFonts.inter(
+          color: Color(0xFFE6F6EE),
+          fontWeight: FontWeight.bold,
+        ),
+        titleMedium: GoogleFonts.inter(
+          color: Color(0xFFE6F6EE),
+          fontWeight: FontWeight.w600,
+        ),
+        labelSmall: GoogleFonts.inter(color: Color(0xFF9BBFAF)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF111827),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0x334D6654)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0x334D6654)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0xFF66C69A), width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF9BE7B5),
+          foregroundColor: const Color(0xFF052013),
+          shape: const StadiumBorder(),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+      ),
+    );
+    return base;
+  }
 }

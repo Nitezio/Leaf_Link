@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:plantcare_pro/models/app_state.dart';
+import 'package:plantcare_pro/services/notification_service.dart';
+import 'fakes/fake_flutter_local_notifications.dart';
 import 'package:plantcare_pro/screens/community_tab.dart';
 import 'package:plantcare_pro/services/image_service.dart';
 
@@ -9,6 +11,7 @@ void main() {
   testWidgets('composer can add post with image and edit/delete', (tester) async {
     ImageService.pickOverride = () async => 'path/to/mock.jpg';
 
+    NotificationService.instance.setTestPlugin(FakeFlutterLocalNotificationsPlugin());
     final state = AppState();
     await tester.pumpWidget(
       ChangeNotifierProvider<AppState>.value(

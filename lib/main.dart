@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'models/app_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/welcome_screen.dart';
@@ -8,6 +9,14 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Load environment variables (local .env is gitignored)
+  await dotenv.load(fileName: '.env');
+
+  final geminiKey = dotenv.env['GEMINI_API_KEY'];
+  if (geminiKey == null || geminiKey.isEmpty) {
+    // Warn but continue — some flows may not require Gemini at runtime.
+    debugPrint('Warning: GEMINI_API_KEY not set in .env');
+  }
 
   runApp(
     ChangeNotifierProvider(
@@ -26,7 +35,7 @@ class PlantCareApp extends StatelessWidget {
       title: 'PlantCare Pro',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      darkTheme: AppTheme.theme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: context.select((AppState s) => s.isDarkMode ? ThemeMode.dark : ThemeMode.light),
       home: const _RootNavigator(),
     );
@@ -48,10 +57,10 @@ class _RootNavigatorState extends State<_RootNavigator> {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     if (state.isLoggedIn) {
-      return const HomeScreen();
+      return HomeScreen();
     }
     if (_showLogin) {
-      return const LoginScreen();
+      return LoginScreen();
     }
     return WelcomeScreen(
       onGetStarted: () => setState(() {

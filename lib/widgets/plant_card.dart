@@ -11,7 +11,7 @@ class PlantCard extends StatelessWidget {
   final Function(String) onScan;
   final VoidCallback? onTap;
 
-  const PlantCard({
+  PlantCard({
     super.key,
     required this.plant,
     required this.onWater,
@@ -25,13 +25,13 @@ class PlantCard extends StatelessWidget {
 
     final card = Container(
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -53,11 +53,11 @@ class PlantCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     placeholder: (_, __) => Container(color: AppColors.chart4),
                     errorWidget: (_, __, ___) =>
-                        Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 48, color: Colors.white)),
+                        Container(color: AppColors.chart4, child: Icon(Icons.eco, size: 48, color: Colors.white)),
                   ),
                 // Gradient
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
@@ -71,7 +71,7 @@ class PlantCard extends StatelessWidget {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
@@ -79,14 +79,14 @@ class PlantCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(cfg['icon']!, style: const TextStyle(fontSize: 13)),
-                        const SizedBox(width: 4),
+                        Text(cfg['icon']!, style: TextStyle(fontSize: 13)),
+                        SizedBox(width: 4),
                         Text(
                           cfg['text']!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.foreground,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -98,7 +98,7 @@ class PlantCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
@@ -106,14 +106,14 @@ class PlantCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.secondary),
-                        const SizedBox(width: 3),
+                        Icon(Icons.auto_awesome_rounded, size: 12, color: AppColors.secondary),
+                        SizedBox(width: 3),
                         Text(
                           'Lv.${plant.level}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.foreground,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -130,7 +130,7 @@ class PlantCard extends StatelessWidget {
                     children: [
                       Text(
                         plant.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -138,7 +138,7 @@ class PlantCard extends StatelessWidget {
                       ),
                       Text(
                         plant.species,
-                        style: const TextStyle(color: Color(0xCCFFFFFF), fontSize: 12),
+                        style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 12),
                       ),
                     ],
                   ),
@@ -149,7 +149,7 @@ class PlantCard extends StatelessWidget {
 
           // Card body
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               children: [
                 Row(
@@ -161,29 +161,29 @@ class PlantCard extends StatelessWidget {
                         color: AppColors.secondary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.water_drop_outlined, size: 16, color: AppColors.secondary),
+                      child: Icon(Icons.water_drop_outlined, size: 16, color: AppColors.secondary),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Next watering',
-                          style: TextStyle(fontSize: 11, color: AppColors.mutedForeground),
+                          style: TextStyle(fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                         ),
                         Text(
                           plant.nextWatering,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.foreground,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -191,42 +191,42 @@ class PlantCard extends StatelessWidget {
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () => onWater(plant.id),
-                          icon: const Icon(Icons.water_drop_outlined, size: 18),
-                          label: const Text('Water Now'),
+                          icon: Icon(Icons.water_drop_outlined, size: 18),
+                          label: Text('Water Now'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            shape: const StadiumBorder(),
+                            shape: StadiumBorder(),
                             elevation: 2,
                             shadowColor: AppColors.primary.withValues(alpha: 0.2),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => onScan(plant.id),
                       child: Container(
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppColors.card,
+                          color: Theme.of(context).cardColor,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.border, width: 2),
+                          border: Border.all(color: Theme.of(context).colorScheme.outline, width: 2),
                         ),
-                        child: const Icon(Icons.camera_alt_outlined, size: 22, color: AppColors.foreground),
+                        child: Icon(Icons.camera_alt_outlined, size: 22, color: Theme.of(context).colorScheme.onSurface),
                       ),
                     ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton(
                           onPressed: onTap,
                           style: OutlinedButton.styleFrom(
-                            shape: const StadiumBorder(),
-                            side: const BorderSide(color: AppColors.border),
-                            foregroundColor: AppColors.foreground,
+                            shape: StadiumBorder(),
+                            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+                            foregroundColor: Theme.of(context).colorScheme.onSurface,
                           ),
-                          child: const Text('Details'),
+                          child: Text('Details'),
                         ),
                       ),
                   ],

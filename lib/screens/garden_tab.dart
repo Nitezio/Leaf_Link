@@ -8,7 +8,7 @@ import '../widgets/plant_card.dart';
 import '../widgets/responsive_body.dart';
 
 class GardenTab extends StatelessWidget {
-  const GardenTab({super.key});
+  GardenTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,34 +20,34 @@ class GardenTab extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'My Garden',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.foreground,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
                       padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.add_rounded,
+                      icon: Icon(Icons.add_rounded,
                           color: Colors.white, size: 22),
                       onPressed: () async {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const AddEditPlantScreen(),
+                            builder: (_) => AddEditPlantScreen(),
                           ),
                         );
                       },
@@ -60,26 +60,26 @@ class GardenTab extends StatelessWidget {
             // Filter chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: ['All', 'Thriving', 'Needs Care', 'New'].map((label) {
                   final isAll = label == 'All';
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: EdgeInsets.only(right: 8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                           horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isAll ? AppColors.primary : AppColors.card,
+                        color: isAll ? AppColors.primary : Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isAll ? AppColors.primary : AppColors.border,
+                          color: isAll ? AppColors.primary : Theme.of(context).colorScheme.outline,
                         ),
                       ),
                       child: Text(
                         label,
                         style: TextStyle(
-                          color: isAll ? Colors.white : AppColors.foreground,
+                          color: isAll ? Colors.white : Theme.of(context).colorScheme.onSurface,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -89,17 +89,17 @@ class GardenTab extends StatelessWidget {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             ...state.plants.map((plant) => Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: PlantCard(
                     plant: plant,
                     onWater: (id) {
                       state.waterPlant(id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Plant watered! +50 XP 🌱'),
+                          content: Text('Plant watered! +50 XP 🌱'),
                           backgroundColor: AppColors.secondary,
                           behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
@@ -118,7 +118,7 @@ class GardenTab extends StatelessWidget {
                     },
                   ),
                 )),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),

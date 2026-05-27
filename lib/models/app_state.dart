@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import '../services/firestore_service.dart';
 import '../services/persistence_service.dart';
 import '../services/app_logger.dart';
+import '../services/notification_service.dart';
 import '../services/secure_storage_service.dart';
 import 'models.dart';
 
@@ -13,6 +15,7 @@ class AppState extends ChangeNotifier {
   static const _profilePrefsKey = 'profile_v1';
   static const _authPrefsKey = 'auth_session_v1';
   static const _cartPrefsKey = 'cart_v1';
+  static const _purchaseHistoryKey = 'purchase_history_v1';
   // removed unused _lastWaterDateKey constant
 
   AppState() {
@@ -24,6 +27,7 @@ class AppState extends ChangeNotifier {
     _communityPosts.addAll(_seedCommunityPosts());
     _loadCommunityPosts();
     _loadCart();
+    _loadPurchaseHistory();
     _loadWateringSchedule();
     // Attempt background migration to Firestore (idempotent)
     migrateLocalPostsToFirestore();
@@ -136,6 +140,8 @@ class AppState extends ChangeNotifier {
   final Map<String, String> _wateringSchedule = {}; // plantId -> ISO timestamp
 
   final List<CartItem> cartItems = [];
+  final List<PurchaseReceipt> _purchaseHistory = [];
+  PurchaseReceipt? _latestReceipt;
 
   String profileName = 'Plant Parent';
   String profileEmoji = '🌿';
@@ -149,6 +155,8 @@ class AppState extends ChangeNotifier {
 
   List<CommunityPost> get communityPosts => List.unmodifiable(_communityPosts);
   bool get communityLoaded => _communityLoaded;
+  List<PurchaseReceipt> get purchaseHistory => List.unmodifiable(_purchaseHistory);
+  PurchaseReceipt? get latestReceipt => _latestReceipt;
 
   int get cartCount => cartItems.fold<int>(0, (sum, item) => sum + item.quantity);
 
@@ -239,6 +247,7 @@ class AppState extends ChangeNotifier {
       }
       _lastWaterDate = todayKey;
       userStats.points += 50;
+      unawaited(NotificationService.instance.cancelNotification(id));
       _saveAuthSession();
       _savePlants();
       notifyListeners();
@@ -396,6 +405,9 @@ class AppState extends ChangeNotifier {
       commentCount: existing.commentCount,
       likedByMe: existing.likedByMe,
       bookmarked: existing.bookmarked,
+      reportedByMe: existing.reportedByMe,
+      reportCount: existing.reportCount,
+      hidden: existing.hidden,
       comments: existing.comments,
     );
     _communityPosts[idx] = updated;
@@ -405,6 +417,40 @@ class AppState extends ChangeNotifier {
 
   void deleteCommunityPost(String postId) {
     _communityPosts.removeWhere((p) => p.id == postId);
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void toggleCommunityReport(String postId) {
+    final post = getCommunityPost(postId);
+    if (post == null) return;
+    if (post.reportedByMe) {
+      post.reportedByMe = false;
+      if (post.reportCount > 0) {
+        post.reportCount -= 1;
+      }
+    } else {
+      post.reportedByMe = true;
+      post.reportCount += 1;
+    }
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void toggleCommunityHidden(String postId) {
+    final post = getCommunityPost(postId);
+    if (post == null) return;
+    post.hidden = !post.hidden;
+    _saveCommunityPosts();
+    notifyListeners();
+  }
+
+  void clearCommunityModeration(String postId) {
+    final post = getCommunityPost(postId);
+    if (post == null) return;
+    post.reportCount = 0;
+    post.reportedByMe = false;
+    post.hidden = false;
     _saveCommunityPosts();
     notifyListeners();
   }
@@ -444,6 +490,12 @@ class AppState extends ChangeNotifier {
       _savePlants();
     }
     await _saveWateringSchedule();
+    final plant = getPlant(plantId);
+    final title = plant == null ? 'Watering reminder' : 'Water ${plant.name}';
+    final body = plant == null
+        ? 'Time to water your plant.'
+        : 'Tap to open your garden and care for ${plant.name}.';
+    await NotificationService.instance.scheduleNotification(plantId, title, body, when);
     notifyListeners();
   }
 
@@ -455,6 +507,7 @@ class AppState extends ChangeNotifier {
       _savePlants();
     }
     await _saveWateringSchedule();
+    await NotificationService.instance.cancelNotification(plantId);
     notifyListeners();
   }
 
@@ -497,6 +550,14 @@ class AppState extends ChangeNotifier {
           try {
             final dt = DateTime.parse(s);
             plants[idx] = plants[idx].copyWith(nextWatering: _friendlyNextWatering(dt));
+            if (dt.isAfter(DateTime.now())) {
+              unawaited(NotificationService.instance.scheduleNotification(
+                k,
+                'Water ${plants[idx].name}',
+                'Tap to open your garden and care for ${plants[idx].name}.',
+                dt,
+              ));
+            }
           } catch (_) {}
         }
       });
@@ -524,6 +585,27 @@ class AppState extends ChangeNotifier {
       final storeItem = marketplaceItems.firstWhere((it) => it.id == ci.item.id, orElse: () => ci.item);
       if (ci.quantity > storeItem.stock) return false;
     }
+    final receiptItems = cartItems
+        .map(
+          (ci) => ReceiptLine(
+            itemId: ci.item.id,
+            itemName: ci.item.name,
+            emoji: ci.item.emoji,
+            priceLabel: ci.item.price,
+            quantity: ci.quantity,
+          ),
+        )
+        .toList();
+    final pointsAwarded = cartItems.fold<int>(0, (s, c) => s + (c.quantity * 10));
+    final subtotal = cartItems.fold<double>(0, (sum, ci) => sum + (_parseCurrency(ci.item.price) * ci.quantity));
+    _latestReceipt = PurchaseReceipt(
+      id: _generateId(),
+      purchasedAt: DateTime.now().toIso8601String(),
+      items: receiptItems,
+      totalLabel: _formatCurrency(subtotal),
+      pointsAwarded: pointsAwarded,
+    );
+    _purchaseHistory.insert(0, _latestReceipt!);
     // apply purchase
     for (final ci in cartItems) {
       final idx = marketplaceItems.indexWhere((it) => it.id == ci.item.id);
@@ -532,12 +614,20 @@ class AppState extends ChangeNotifier {
       }
     }
     // award points
-    userStats.points += cartItems.fold<int>(0, (s, c) => s + (c.quantity * 10));
+    userStats.points += pointsAwarded;
     clearCart();
     _saveMarketplace();
+    _savePurchaseHistory();
     notifyListeners();
     return true;
   }
+
+  double _parseCurrency(String label) {
+    final normalized = label.replaceAll(RegExp(r'[^0-9.]'), '');
+    return double.tryParse(normalized) ?? 0;
+  }
+
+  String _formatCurrency(double value) => '\$${value.toStringAsFixed(2)}';
 
   static const _marketplacePrefsKey = 'marketplace_v1';
 
@@ -751,6 +841,27 @@ class AppState extends ChangeNotifier {
       await _saveCommunityPosts();
       notifyListeners();
     }
+  }
+
+  Future<void> _savePurchaseHistory() async {
+    try {
+      final payload = jsonEncode(_purchaseHistory.map((r) => r.toMap()).toList());
+      await PersistenceService.instance.setString(_purchaseHistoryKey, payload);
+    } catch (_) {}
+  }
+
+  Future<void> _loadPurchaseHistory() async {
+    try {
+      final raw = await PersistenceService.instance.getString(_purchaseHistoryKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      _purchaseHistory
+        ..clear()
+        ..addAll(decoded.map((item) => PurchaseReceipt.fromMap(Map<String, dynamic>.from(item as Map))));
+      if (_purchaseHistory.isNotEmpty) {
+        _latestReceipt = _purchaseHistory.first;
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadCart() async {

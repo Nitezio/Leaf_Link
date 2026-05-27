@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import '../widgets/responsive_body.dart';
 
 class CommunityTab extends StatefulWidget {
-  const CommunityTab({super.key});
+  CommunityTab({super.key});
 
   @override
   State<CommunityTab> createState() => _CommunityTabState();
@@ -68,8 +68,8 @@ class _CommunityTabState extends State<CommunityTab> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.background,
-      shape: const RoundedRectangleBorder(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) {
@@ -81,61 +81,61 @@ class _CommunityTabState extends State<CommunityTab> {
               height: MediaQuery.of(sheetContext).size.height * 0.6,
               child: Column(
                 children: [
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   Container(
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.muted,
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  SizedBox(height: 12),
+                  Text(
                     'Comments',
                     style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.foreground),
+                        color: Theme.of(context).colorScheme.onSurface),
                   ),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   Expanded(
                     child: Consumer<AppState>(
                       builder: (context, state, _) {
                         final updated = state.getCommunityPost(post.id) ?? post;
                         final comments = updated.comments;
                         if (comments.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
                               'No comments yet. Be the first to reply.',
                               style: TextStyle(
-                                  color: AppColors.mutedForeground,
+                                  color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                                   fontSize: 13),
                             ),
                           );
                         }
                         return ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                           itemCount: comments.length,
                           separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final comment = comments[index];
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const CircleAvatar(radius: 16, backgroundColor: AppColors.chart3, child: Text('🧑', style: TextStyle(fontSize: 14))),
-                                const SizedBox(width: 10),
+                                CircleAvatar(radius: 16, backgroundColor: AppColors.chart3, child: Text('🧑', style: TextStyle(fontSize: 14))),
+                                SizedBox(width: 10),
                                 Expanded(
                                   child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.border)),
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Theme.of(context).colorScheme.outline)),
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      Text(comment.author, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.foreground)),
-                                      const SizedBox(height: 4),
-                                      Text(comment.text, style: const TextStyle(fontSize: 13, color: AppColors.foreground, height: 1.3)),
-                                      const SizedBox(height: 6),
-                                      Text(comment.timeLabel, style: const TextStyle(fontSize: 10, color: AppColors.mutedForeground)),
+                                      Text(comment.author, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                                      SizedBox(height: 4),
+                                      Text(comment.text, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, height: 1.3)),
+                                      SizedBox(height: 6),
+                                      Text(comment.timeLabel, style: TextStyle(fontSize: 10, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                                     ]),
                                   ),
                                 ),
@@ -149,11 +149,11 @@ class _CommunityTabState extends State<CommunityTab> {
                                           final edited = await showDialog<String>(
                                             context: sheetContext,
                                             builder: (dctx) => AlertDialog(
-                                              title: const Text('Edit comment'),
+                                              title: Text('Edit comment'),
                                               content: TextField(controller: editCtrl, maxLines: 3),
                                               actions: [
-                                                TextButton(onPressed: () => Navigator.pop(dctx, null), child: const Text('Cancel')),
-                                                TextButton(onPressed: () => Navigator.pop(dctx, editCtrl.text), child: const Text('Save')),
+                                                TextButton(onPressed: () => Navigator.pop(dctx, null), child: Text('Cancel')),
+                                                TextButton(onPressed: () => Navigator.pop(dctx, editCtrl.text), child: Text('Save')),
                                               ],
                                             ),
                                           );
@@ -161,9 +161,9 @@ class _CommunityTabState extends State<CommunityTab> {
                                             app.editCommunityComment(post.id, comment.id, edited.trim());
                                           }
                                         },
-                                        icon: const Icon(Icons.edit_outlined, color: AppColors.mutedForeground),
+                                        icon: Icon(Icons.edit_outlined, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                                       ),
-                                      IconButton(onPressed: () => context.read<AppState>().deleteCommunityComment(post.id, comment.id), icon: const Icon(Icons.delete_outline, color: AppColors.mutedForeground)),
+                                      IconButton(onPressed: () => context.read<AppState>().deleteCommunityComment(post.id, comment.id), icon: Icon(Icons.delete_outline, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                                     ],
                                   ),
                               ],
@@ -174,23 +174,23 @@ class _CommunityTabState extends State<CommunityTab> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                    decoration: const BoxDecoration(
-                      color: AppColors.card,
-                      border: Border(top: BorderSide(color: AppColors.border)),
+                    padding: EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline)),
                     ),
                     child: Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 16,
                           backgroundColor: AppColors.chart3,
                           child: Text('🧑', style: TextStyle(fontSize: 14)),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: TextField(
                             controller: controller,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Write a comment...',
                               border: InputBorder.none,
                             ),
@@ -203,7 +203,7 @@ class _CommunityTabState extends State<CommunityTab> {
                                 .addCommunityComment(post.id, controller.text);
                             controller.clear();
                           },
-                          icon: const Icon(Icons.send_rounded,
+                          icon: Icon(Icons.send_rounded,
                               color: AppColors.secondary),
                         ),
                       ],
@@ -226,9 +226,10 @@ class _CommunityTabState extends State<CommunityTab> {
           post.caption.toLowerCase().contains(query) ||
           post.userName.toLowerCase().contains(query);
       final matchesFeed = switch (_selectedFeed) {
+        'Moderation' => post.hidden || post.reportCount > 0,
         'Saved' => post.bookmarked,
         'Trending' => post.likeCount >= 100,
-        _ => true,
+        _ => !post.hidden,
       };
       return matchesQuery && matchesFeed;
     }).toList();
@@ -244,62 +245,62 @@ class _CommunityTabState extends State<CommunityTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
+            Padding(
               padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
               child: Text(
                 'Community',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.foreground,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
                   hintText: 'Search community posts…',
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  prefixIcon: Icon(Icons.search_rounded),
                   filled: true,
-                  fillColor: AppColors.card,
+                  fillColor: Theme.of(context).cardColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(color: AppColors.border),
+                    borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  contentPadding: EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
-                children: ['All', 'Trending', 'Saved'].map((feed) {
+                children: ['All', 'Trending', 'Saved', 'Moderation'].map((feed) {
                   final selected = feed == _selectedFeed;
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: EdgeInsets.only(right: 8),
                     child: ChoiceChip(
                       label: Text(feed),
                       selected: selected,
                       onSelected: (_) => setState(() => _selectedFeed = feed),
                       selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
-                        color: selected ? Colors.white : AppColors.foreground,
+                        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
-                      backgroundColor: AppColors.card,
+                      backgroundColor: Theme.of(context).cardColor,
                       side: BorderSide(
-                        color: selected ? AppColors.primary : AppColors.border,
+                        color: selected ? AppColors.primary : Theme.of(context).colorScheme.outline,
                       ),
                     ),
                   );
@@ -309,30 +310,30 @@ class _CommunityTabState extends State<CommunityTab> {
 
             // Composer
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.card,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 18,
                           backgroundColor: AppColors.chart3,
                           child: Text('🧑', style: TextStyle(fontSize: 16)),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 10),
                         Expanded(
                           child: TextField(
                             controller: _postCtrl,
                             maxLines: 4,
                             minLines: 1,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Share your plant journey...',
                               border: InputBorder.none,
                             ),
@@ -340,25 +341,25 @@ class _CommunityTabState extends State<CommunityTab> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           'Posting as You',
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.mutedForeground),
+                              fontSize: 12, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                         ),
-                        const Spacer(),
+                        Spacer(),
                         if (_attachedImagePath != null)
                           Padding(
-                            padding: const EdgeInsets.only(right: 8.0),
+                            padding: EdgeInsets.only(right: 8.0),
                             child: kIsWeb || _attachedImagePath!.startsWith('http')
                                 ? Image.network(_attachedImagePath!, height: 48, width: 72, fit: BoxFit.cover)
                                 : Image.file(File(_attachedImagePath!), height: 48, width: 72, fit: BoxFit.cover),
                           ),
                         IconButton(
                           onPressed: _pickImage,
-                          icon: const Icon(Icons.photo_library, color: AppColors.primary),
+                          icon: Icon(Icons.photo_library, color: AppColors.primary),
                         ),
                         ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _postCtrl,
@@ -369,11 +370,11 @@ class _CommunityTabState extends State<CommunityTab> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
-                                shape: const StadiumBorder(),
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                shape: StadiumBorder(),
+                                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                textStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                               ),
-                              child: const Text('Post'),
+                              child: Text('Post'),
                             );
                           },
                         ),
@@ -385,16 +386,16 @@ class _CommunityTabState extends State<CommunityTab> {
             ),
 
             // Stories row
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: ['You', 'Alice', 'Marco', 'Mia', 'Lena', 'Chris']
                     .map((name) {
                   final isYou = name == 'You';
                   return Padding(
-                    padding: const EdgeInsets.only(right: 14),
+                    padding: EdgeInsets.only(right: 14),
                     child: Column(
                       children: [
                         Container(
@@ -404,47 +405,47 @@ class _CommunityTabState extends State<CommunityTab> {
                             shape: BoxShape.circle,
                             border: Border.all(
                               color:
-                                  isYou ? AppColors.muted : AppColors.secondary,
+                                  isYou ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.9) : AppColors.secondary,
                               width: 2.5,
                             ),
                           ),
                           child: isYou
-                              ? const CircleAvatar(
-                                  backgroundColor: AppColors.muted,
+                              ? CircleAvatar(
+                                  backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                                   child: Icon(Icons.add_rounded,
                                       color: AppColors.secondary),
                                 )
                               : CircleAvatar(
                                   backgroundColor: AppColors.chart3,
                                   child: Text(name[0],
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.primary)),
                                 ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(name,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.mutedForeground)),
+                                color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                       ],
                     ),
                   );
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
-            const Divider(color: AppColors.border, height: 1),
-            const SizedBox(height: 8),
+            SizedBox(height: 16),
+            Divider(color: Theme.of(context).colorScheme.outline, height: 1),
+            SizedBox(height: 8),
 
             // Posts
             if (posts.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(
                   child: Text(
                     'No posts match this filter yet.',
-                    style: TextStyle(color: AppColors.mutedForeground),
+                    style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                   ),
                 ),
               )
@@ -455,9 +456,12 @@ class _CommunityTabState extends State<CommunityTab> {
                   onLike: () => state.toggleCommunityLike(post.id),
                   onComment: () => _showComments(context, post),
                   onBookmark: () => state.toggleCommunityBookmark(post.id),
+                  onReport: () => state.toggleCommunityReport(post.id),
+                  onHide: () => state.toggleCommunityHidden(post.id),
+                  onResolve: () => state.clearCommunityModeration(post.id),
                 ),
               ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -470,26 +474,32 @@ class _PostCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onBookmark;
+  final VoidCallback onReport;
+  final VoidCallback onHide;
+  final VoidCallback onResolve;
 
-  const _PostCard({
+  _PostCard({
     required this.post,
     required this.onLike,
     required this.onComment,
     required this.onBookmark,
+    required this.onReport,
+    required this.onHide,
+    required this.onResolve,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withValues(alpha: 0.06),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -499,101 +509,132 @@ class _PostCard extends StatelessWidget {
         children: [
           // User header
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             child: Row(
               children: [
                 CircleAvatar(
                   backgroundColor: AppColors.chart3,
                   radius: 20,
                   child:
-                      Text(post.avatar, style: const TextStyle(fontSize: 18)),
+                      Text(post.avatar, style: TextStyle(fontSize: 18)),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(post.userName,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
-                            color: AppColors.foreground)),
+                            color: Theme.of(context).colorScheme.onSurface)),
                     Text(post.timeLabel,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.mutedForeground)),
+                        style: TextStyle(
+                            fontSize: 11, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                   ],
                 ),
-                const Spacer(),
-                if (post.userName == 'You')
-                  PopupMenuButton<String>(
-                    onSelected: (choice) async {
-                      final app = context.read<AppState>();
-                      final localContext = context;
-                        if (choice == 'edit') {
-                          final ctrl = TextEditingController(text: post.caption);
-                          String? newImage = post.imageUrl;
-                          final result = await showDialog<Map<String, String?>>(
-                            context: localContext,
-                            builder: (dctx) => AlertDialog(
-                              title: const Text('Edit post'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(controller: ctrl),
-                                  const SizedBox(height: 8),
-                                  TextButton.icon(
-                                    onPressed: () async {
-                                      final p = await ImageService.pickFromGallery();
-                                      if (p != null) newImage = p;
-                                    },
-                                    icon: const Icon(Icons.photo_library),
-                                    label: const Text('Change image'),
-                                  ),
-                                ],
+                Spacer(),
+                PopupMenuButton<String>(
+                  onSelected: (choice) async {
+                    final app = context.read<AppState>();
+                    final localContext = context;
+                    if (choice == 'edit') {
+                      final ctrl = TextEditingController(text: post.caption);
+                      String? newImage = post.imageUrl;
+                      final result = await showDialog<Map<String, String?>>(
+                        context: localContext,
+                        builder: (dctx) => AlertDialog(
+                          title: Text('Edit post'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(controller: ctrl),
+                              SizedBox(height: 8),
+                              TextButton.icon(
+                                onPressed: () async {
+                                  final p = await ImageService.pickFromGallery();
+                                  if (p != null) newImage = p;
+                                },
+                                icon: Icon(Icons.photo_library),
+                                label: Text('Change image'),
                               ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(dctx, null), child: const Text('Cancel')),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(dctx, {'caption': ctrl.text, 'image': newImage}),
-                                  child: const Text('Save'),
-                                ),
-                              ],
+                            ],
+                          ),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(dctx, null), child: Text('Cancel')),
+                            TextButton(
+                              onPressed: () => Navigator.pop(dctx, {'caption': ctrl.text, 'image': newImage}),
+                              child: Text('Save'),
                             ),
-                          );
-                          if (result != null) {
-                            String? imageToSave = result['image'];
-                            if (imageToSave != null && !imageToSave.startsWith('http')) {
-                              try {
-                                imageToSave = await StorageService.uploadFile(imageToSave);
-                              } catch (_) {}
-                            }
-                            app.editCommunityPost(post.id, caption: result['caption'] ?? post.caption, imageUrl: imageToSave);
-                          }
-                        } else if (choice == 'delete') {
-                          final confirmed = await showDialog<bool>(
-                            context: localContext,
-                            builder: (dctx) => AlertDialog(
-                              title: const Text('Delete post?'),
-                              content: const Text('This will remove the post.'),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(dctx, false), child: const Text('Cancel')),
-                                TextButton(onPressed: () => Navigator.pop(dctx, true), child: const Text('Delete')),
-                              ],
-                            ),
-                          );
-                          if (confirmed == true) app.deleteCommunityPost(post.id);
+                          ],
+                        ),
+                      );
+                      if (result != null) {
+                        String? imageToSave = result['image'];
+                        if (imageToSave != null && !imageToSave.startsWith('http')) {
+                          try {
+                            imageToSave = await StorageService.uploadFile(imageToSave);
+                          } catch (_) {}
                         }
-                      },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                    ],
-                    child: const Icon(Icons.more_horiz_rounded, color: AppColors.mutedForeground),
-                  )
-                else
-                  const Icon(Icons.more_horiz_rounded, color: AppColors.mutedForeground),
+                        app.editCommunityPost(post.id, caption: result['caption'] ?? post.caption, imageUrl: imageToSave);
+                      }
+                    } else if (choice == 'delete') {
+                      final confirmed = await showDialog<bool>(
+                        context: localContext,
+                        builder: (dctx) => AlertDialog(
+                          title: Text('Delete post?'),
+                          content: Text('This will remove the post.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text('Cancel')),
+                            TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text('Delete')),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) app.deleteCommunityPost(post.id);
+                    } else if (choice == 'report') {
+                      onReport();
+                    } else if (choice == 'hide') {
+                      onHide();
+                    } else if (choice == 'resolve') {
+                      onResolve();
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    if (post.userName == 'You')
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    if (post.userName == 'You')
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    if (post.userName != 'You')
+                      PopupMenuItem(
+                        value: 'report',
+                        child: Text(post.reportedByMe ? 'Remove Report' : 'Report'),
+                      ),
+                    PopupMenuItem(
+                      value: 'hide',
+                      child: Text(post.hidden ? 'Show in feed' : 'Hide from feed'),
+                    ),
+                    if (post.reportCount > 0)
+                      PopupMenuItem(value: 'resolve', child: Text('Resolve reports')),
+                  ],
+                  child: Icon(Icons.more_horiz_rounded, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+                ),
               ],
             ),
           ),
+
+          if (post.hidden || post.reportCount > 0)
+            Padding(
+              padding: EdgeInsets.fromLTRB(14, 0, 14, 10),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (post.hidden)
+                    _Badge(label: 'Hidden', color: AppColors.destructive),
+                  if (post.reportCount > 0)
+                    _Badge(label: 'Reported ${post.reportCount}', color: AppColors.secondary),
+                ],
+              ),
+            ),
 
           if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
             (kIsWeb || post.imageUrl!.startsWith('http'))
@@ -608,16 +649,16 @@ class _PostCard extends StatelessWidget {
 
           // Caption + actions
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(post.caption,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.foreground,
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.4)),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     _ActionButton(
@@ -625,7 +666,7 @@ class _PostCard extends StatelessWidget {
                       child: Row(
                         children: [
                           AnimatedScale(
-                            duration: const Duration(milliseconds: 120),
+                            duration: Duration(milliseconds: 120),
                             scale: post.likedByMe ? 1.1 : 1.0,
                             child: Icon(
                               post.likedByMe
@@ -634,34 +675,34 @@ class _PostCard extends StatelessWidget {
                               size: 20,
                               color: post.likedByMe
                                   ? AppColors.destructive
-                                  : AppColors.mutedForeground,
+                                  : (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Text(
                             '${post.likeCount}',
-                            style: const TextStyle(
-                                fontSize: 13, color: AppColors.mutedForeground),
+                            style: TextStyle(
+                                fontSize: 13, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     _ActionButton(
                       onTap: onComment,
                       child: Row(
                         children: [
-                          const Icon(Icons.chat_bubble_outline_rounded,
-                              size: 18, color: AppColors.mutedForeground),
-                          const SizedBox(width: 4),
+                          Icon(Icons.chat_bubble_outline_rounded,
+                              size: 18, color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
+                          SizedBox(width: 4),
                           Text('${post.commentCount}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.mutedForeground)),
+                                  color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)))),
                         ],
                       ),
                     ),
-                    const Spacer(),
+                    Spacer(),
                     _ActionButton(
                       onTap: onBookmark,
                       child: Icon(
@@ -671,7 +712,7 @@ class _PostCard extends StatelessWidget {
                         size: 20,
                         color: post.bookmarked
                             ? AppColors.secondary
-                            : AppColors.mutedForeground,
+                            : (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                       ),
                     ),
                   ],
@@ -689,7 +730,7 @@ class _ActionButton extends StatelessWidget {
   final Widget child;
   final VoidCallback onTap;
 
-  const _ActionButton({required this.child, required this.onTap});
+  _ActionButton({required this.child, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -699,8 +740,35 @@ class _ActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  _Badge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

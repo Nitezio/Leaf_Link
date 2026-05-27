@@ -11,7 +11,7 @@ import '../theme/app_theme.dart';
 class AddEditPlantScreen extends StatefulWidget {
   final Plant? plant;
 
-  const AddEditPlantScreen({super.key, this.plant});
+  AddEditPlantScreen({super.key, this.plant});
 
   @override
   State<AddEditPlantScreen> createState() => _AddEditPlantScreenState();
@@ -99,16 +99,16 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
   Widget build(BuildContext context) {
     final isEditing = widget.plant != null;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.foreground,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         title: Text(isEditing ? 'Edit Plant' : 'Add Plant'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Form(
             key: _formKey,
             child: Column(
@@ -120,36 +120,36 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                       height: 160,
                       width: double.infinity,
                       child: kIsWeb || _imageCtrl.text.startsWith('http')
-                          ? Image.network(_imageCtrl.text, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 40, color: Colors.white)))
-                          : Image.file(File(_imageCtrl.text), fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: const Icon(Icons.eco, size: 40, color: Colors.white))),
+                          ? Image.network(_imageCtrl.text, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: Icon(Icons.eco, size: 40, color: Colors.white)))
+                          : Image.file(File(_imageCtrl.text), fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: AppColors.chart4, child: Icon(Icons.eco, size: 40, color: Colors.white))),
                     ),
                   ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _field(_nameCtrl, 'Plant name'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _field(_speciesCtrl, 'Species'),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _field(_imageCtrl, 'Image URL or path', keyboardType: TextInputType.url),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton.icon(
                     onPressed: _pickImage,
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Pick from gallery'),
+                    icon: Icon(Icons.photo_library),
+                    label: Text('Pick from gallery'),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 _field(_notesCtrl, 'Notes', maxLines: 3),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(child: _field(_lastWateredCtrl, 'Last watered')),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(child: _field(_nextWateringCtrl, 'Next watering')),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -165,7 +165,7 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                         onChanged: (value) => setState(() => _health = value ?? _health),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: SliderTheme(
                         data: SliderTheme.of(context).copyWith(
@@ -184,7 +184,7 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -193,7 +193,7 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      shape: const StadiumBorder(),
+                      shape: StadiumBorder(),
                     ),
                     child: Text(isEditing ? 'Save Changes' : 'Add Plant'),
                   ),
@@ -230,14 +230,14 @@ class _AddEditPlantScreenState extends State<AddEditPlantScreen> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: AppColors.card,
+      fillColor: Theme.of(context).cardColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
     );
   }
