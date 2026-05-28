@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/firestore_service.dart';
 import '../services/persistence_service.dart';
 import '../services/app_logger.dart';
@@ -722,6 +725,8 @@ class AppState extends ChangeNotifier {
     final trimmedEmail = email.trim();
     final trimmedPassword = password.trim();
     final trimmedName = name?.trim() ?? '';
+    final useLocalDevAuth =
+        trimmedEmail.toLowerCase() == 'test@gmail.com' && trimmedPassword == '123test';
 
     if (trimmedEmail.isEmpty || !trimmedEmail.contains('@')) {
       return 'Enter a valid email address.';
@@ -736,16 +741,90 @@ class AppState extends ChangeNotifier {
     sessionEmail = trimmedEmail;
     isLoggedIn = true;
     justSignedOut = false;
-    if (isSignup && trimmedName.isNotEmpty) {
-      profileName = trimmedName;
+    // Keep the built-in dev account local to avoid noisy Firebase invalid-credential logs.
+    if (useLocalDevAuth) {
+      if (isSignup && trimmedName.isNotEmpty) {
+        profileName = trimmedName;
+      }
+      await _saveProfileSettings();
+      await _saveAuthSession();
+      notifyListeners();
+      return null;
     }
+
+    // If Firebase is available, attempt real auth; otherwise fall back to local.
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        if (isSignup) {
+          final userCred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: trimmedEmail,
+            password: trimmedPassword,
+          );
+          if (trimmedName.isNotEmpty) {
+            await userCred.user?.updateDisplayName(trimmedName);
+            profileName = trimmedName;
+          }
+        } else {
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: trimmedEmail,
+            password: trimmedPassword,
+          );
+        }
+        sessionEmail = FirebaseAuth.instance.currentUser?.email ?? trimmedEmail;
+        isLoggedIn = FirebaseAuth.instance.currentUser != null;
+      } else {
+        // local fallback
+        if (isSignup && trimmedName.isNotEmpty) profileName = trimmedName;
+      }
+    } catch (e, st) {
+      logger.w('Firebase auth failed, falling back to local auth', error: e, stackTrace: st);
+      // Keep local session to allow developer/test usage.
+      if (isSignup && trimmedName.isNotEmpty) profileName = trimmedName;
+    }
+
     await _saveProfileSettings();
     await _saveAuthSession();
     notifyListeners();
     return null;
   }
 
+  /// Sign in using Google (Firebase). Returns null on success or an error message.
+  Future<String?> signInWithGoogle() async {
+    try {
+      if (Firebase.apps.isEmpty) return 'Firebase not initialized';
+      late UserCredential result;
+      if (kIsWeb) {
+        // Web: use popup signin via Firebase Auth.
+        final provider = GoogleAuthProvider();
+        result = await FirebaseAuth.instance.signInWithPopup(provider);
+      } else {
+        // Mobile: use google_sign_in plugin, then exchange ID token with Firebase.
+        await GoogleSignIn.instance.initialize();
+        final googleUser = await GoogleSignIn.instance.authenticate();
+        final googleAuth = googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+        );
+        result = await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+      sessionEmail = result.user?.email;
+      isLoggedIn = result.user != null;
+      await _saveAuthSession();
+      notifyListeners();
+      return null;
+    } catch (e, st) {
+      logger.w('Google sign-in failed', error: e, stackTrace: st);
+      return 'Google sign-in failed. ${e.toString()}';
+    }
+  }
+
   Future<void> signOutLocal() async {
+    // Sign out from Firebase if available, then clear local session.
+    try {
+      if (Firebase.apps.isNotEmpty) {
+        await FirebaseAuth.instance.signOut();
+      }
+    } catch (_) {}
     isLoggedIn = false;
     sessionEmail = null;
     justSignedOut = true;

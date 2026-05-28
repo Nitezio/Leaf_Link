@@ -282,7 +282,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Expanded(
                             child: _socialBtn(
-                                'Google', _googleIcon(), _submit)),
+                                'Google', _googleIcon(), () async {
+                          setState(() {
+                            _isLoading = true;
+                            _errorText = null;
+                          });
+                          final state = context.read<AppState>();
+                          final err = await state.signInWithGoogle();
+                          if (!mounted) return;
+                          setState(() {
+                            _isLoading = false;
+                            _errorText = err;
+                          });
+                          if (err == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Signed in with Google'),
+                                backgroundColor: AppColors.secondary,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        })),
                         SizedBox(width: 12),
                         Expanded(
                               child: _socialBtn(

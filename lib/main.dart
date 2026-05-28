@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/firebase_service.dart';
 import 'models/app_state.dart';
 import 'theme/app_theme.dart';
 import 'screens/welcome_screen.dart';
@@ -16,6 +17,11 @@ Future<void> main() async {
   if (geminiKey == null || geminiKey.isEmpty) {
     // Warn but continue — some flows may not require Gemini at runtime.
     debugPrint('Warning: GEMINI_API_KEY not set in .env');
+  }
+
+  final firebaseReady = await FirebaseService.init();
+  if (!firebaseReady) {
+    debugPrint('Warning: Firebase unavailable. App will continue in local mode.');
   }
 
   runApp(

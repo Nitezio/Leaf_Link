@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'app_logger.dart';
 
 /// Minimal Firestore adapter used by Phase 1 scaffolding.
@@ -14,7 +15,17 @@ class FirestoreService {
   Future<void> addPost(Map<String, dynamic> post) async {
     if (!isAvailable) return;
     try {
-      await postsCollection().add(post);
+      // Ensure a server-side createdAt timestamp exists for ordering.
+      final payload = Map<String, dynamic>.from(post);
+      if (!payload.containsKey('createdAt')) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
+      // Attach ownerId from signed-in Firebase user when available.
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && !payload.containsKey('ownerId')) {
+        payload['ownerId'] = uid;
+      }
+      await postsCollection().add(payload);
     } catch (e, st) {
       logger.e('Failed to add post to Firestore', error: e, stackTrace: st);
       rethrow;
@@ -24,7 +35,16 @@ class FirestoreService {
   Future<void> setPost(String id, Map<String, dynamic> post) async {
     if (!isAvailable) return;
     try {
-      await postsCollection().doc(id).set(post);
+      final payload = Map<String, dynamic>.from(post);
+      if (!payload.containsKey('createdAt')) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
+      // Preserve existing ownerId; if missing and user is signed-in, attach it.
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (!payload.containsKey('ownerId') && uid != null) {
+        payload['ownerId'] = uid;
+      }
+      await postsCollection().doc(id).set(payload);
     } catch (e, st) {
       logger.e('Failed to set post in Firestore', error: e, stackTrace: st);
       rethrow;

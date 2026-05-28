@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Community posts collection
+    match /community_posts/{postId} {
+      allow read: if true; // public read for feed
+
+      // Create only for authenticated users and ownerId must match auth.uid
+      allow create: if request.auth != null
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.caption is string
+                    && request.resource.data.userName is string;
+
+      // Update/Delete only by owner
+      allow update, delete: if request.auth != null
+                            && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Comments as subcollection
+    match /community_posts/{postId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.authorId == request.auth.uid
+                    && request.resource.data.text is string;
+      allow update, delete: if request.auth != null
+                            && resource.data.authorId == request.auth.uid;
+    }
+  }
+}

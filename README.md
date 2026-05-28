@@ -140,3 +140,49 @@ All defined in `lib/theme/app_theme.dart` → `AppColors`.
 | `google_fonts` | Inter font (matching the web app) |
 | `cached_network_image` | Efficient plant image loading |
 | `provider` | State management |
+
+---
+
+## 🔥 Firebase + Firestore Setup
+
+This project is now wired to initialize Firebase at startup via `lib/services/firebase_service.dart`.
+
+### 1. Create Firebase project and enable Firestore
+- In Firebase Console, create a project.
+- Enable **Cloud Firestore** in Production or Test mode.
+- Register app platforms you need (Android/Web first is enough to start).
+
+### 2. Fill `.env` Firebase keys
+Update `.env`:
+
+```env
+FIREBASE_API_KEY=...
+FIREBASE_APP_ID=...
+FIREBASE_MESSAGING_SENDER_ID=...
+FIREBASE_PROJECT_ID=...
+FIREBASE_STORAGE_BUCKET=...
+
+# web only (optional but recommended)
+FIREBASE_AUTH_DOMAIN=...
+FIREBASE_MEASUREMENT_ID=...
+```
+
+### 3. Android config
+This repo already applies Google Services Gradle plugin. Add your config file:
+- `android/app/google-services.json`
+
+### 4. iOS config (when building on macOS)
+Add:
+- `ios/Runner/GoogleService-Info.plist`
+
+### 5. Run
+```bash
+flutter pub get
+flutter run
+```
+
+If Firebase keys/config are missing, app startup continues in local/offline mode and logs a warning.
+
+### Current Firestore usage in app
+- `community_posts` collection is used by `lib/services/firestore_service.dart`.
+- App state migrates/syncs local community posts to Firestore when available.
