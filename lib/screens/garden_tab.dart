@@ -8,7 +8,7 @@ import '../widgets/plant_card.dart';
 import '../widgets/responsive_body.dart';
 
 class GardenTab extends StatelessWidget {
-  GardenTab({super.key});
+  const GardenTab({super.key});
 
   @override
   Widget build(BuildContext context) {

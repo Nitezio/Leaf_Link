@@ -6,7 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/responsive_body.dart';
 
 class MarketplaceTab extends StatefulWidget {
-  MarketplaceTab({super.key});
+  const MarketplaceTab({super.key});
 
   @override
   State<MarketplaceTab> createState() => _MarketplaceTabState();

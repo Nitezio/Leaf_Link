@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart';
 import '../widgets/responsive_body.dart';
 
 class CommunityTab extends StatefulWidget {
-  CommunityTab({super.key});
+  const CommunityTab({super.key});
 
   @override
   State<CommunityTab> createState() => _CommunityTabState();

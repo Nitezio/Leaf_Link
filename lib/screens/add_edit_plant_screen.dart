@@ -11,7 +11,7 @@ import '../theme/app_theme.dart';
 class AddEditPlantScreen extends StatefulWidget {
   final Plant? plant;
 
-  AddEditPlantScreen({super.key, this.plant});
+  const AddEditPlantScreen({super.key, this.plant});
 
   @override
   State<AddEditPlantScreen> createState() => _AddEditPlantScreenState();
