@@ -358,9 +358,13 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
     final items = _filteredItems(state);
 
     return ResponsiveBody(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: state.cartCount > 0 ? 80.0 : 0.0), // padding for sticky bar
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -500,8 +504,10 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                 itemBuilder: (context, i) => _ItemCard(
                   item: items[i],
                   onAddToCart: () => state.addToCart(items[i]),
+                  onRemoveFromCart: () => state.decrementCartItem(items[i].id),
                   onOpenDetails: () => _showItemDetails(context, state, items[i]),
                   inCart: state.isInCart(items[i].id),
+                  quantityInCart: state.getCartItemQuantity(items[i].id),
                 ),
               ),
 
@@ -509,21 +515,77 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
           ],
         ),
       ),
-    );
+    ),
+    if (state.cartCount > 0)
+      Positioned(
+        bottom: 16,
+        left: 16,
+        right: 16,
+        child: GestureDetector(
+          onTap: () => _showCartSheet(context, state),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                )
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${state.cartCount} item(s)',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                    Text(
+                      'Total: ${state.cartTotalPriceLabel}',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text('View Cart', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    SizedBox(width: 8),
+                    Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+);
   }
 }
 
 class _ItemCard extends StatelessWidget {
   final MarketplaceItem item;
   final VoidCallback onAddToCart;
+  final VoidCallback onRemoveFromCart;
   final VoidCallback onOpenDetails;
   final bool inCart;
+  final int quantityInCart;
 
   _ItemCard({
     required this.item,
     required this.onAddToCart,
+    required this.onRemoveFromCart,
     required this.onOpenDetails,
     required this.inCart,
+    required this.quantityInCart,
   });
 
   @override
@@ -620,23 +682,53 @@ class _ItemCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 32,
-                  child: ElevatedButton(
-                    onPressed: onAddToCart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: StadiumBorder(),
-                      padding: EdgeInsets.zero,
+                if (quantityInCart > 0)
+                  Container(
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      inCart ? 'Add One More' : 'Add to Cart',
-                      style: TextStyle(fontSize: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.remove, size: 16, color: Colors.white),
+                          onPressed: onRemoveFromCart,
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
+                        Text(
+                          '$quantityInCart',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add, size: 16, color: Colors.white),
+                          onPressed: onAddToCart,
+                          padding: EdgeInsets.zero,
+                          constraints: BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    height: 32,
+                    child: ElevatedButton(
+                      onPressed: onAddToCart,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: StadiumBorder(),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text(
+                        'Add to Cart',
+                        style: TextStyle(fontSize: 12),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),

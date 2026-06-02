@@ -413,6 +413,15 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
+  int getCartItemQuantity(String itemId) {
+    return cartItemFor(itemId)?.quantity ?? 0;
+  }
+
+  String get cartTotalPriceLabel {
+    final total = cartItems.fold<double>(0, (sum, ci) => sum + (_parseCurrency(ci.item.price) * ci.quantity));
+    return _formatCurrency(total);
+  }
+
   CommunityPost? getCommunityPost(String id) {
     for (final post in _communityPosts) {
       if (post.id == id) {
