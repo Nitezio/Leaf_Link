@@ -57,4 +57,28 @@ class FirestoreService {
     }
     return postsCollection().orderBy('createdAt', descending: true).snapshots();
   }
+
+  /// Generic per-user data document. Stores arbitrary JSON blobs for a user
+  /// (plants, cart, purchaseHistory, wateringSchedule, profile settings).
+  CollectionReference<Map<String, dynamic>> userDataCollection() =>
+      _db!.collection('user_data');
+
+  /// Set or merge a user's data document at `user_data/{uid}`.
+  Future<void> setUserData(String uid, Map<String, dynamic> data) async {
+    if (!isAvailable) return;
+    try {
+      final payload = Map<String, dynamic>.from(data);
+      payload['updatedAt'] = FieldValue.serverTimestamp();
+      await userDataCollection().doc(uid).set(payload, SetOptions(merge: true));
+    } catch (e, st) {
+      logger.e('Failed to set user data in Firestore', error: e, stackTrace: st);
+      rethrow;
+    }
+  }
+
+  /// Watch a user's data document for realtime updates.
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserData(String uid) {
+    if (!isAvailable) return const Stream.empty();
+    return userDataCollection().doc(uid).snapshots();
+  }
 }

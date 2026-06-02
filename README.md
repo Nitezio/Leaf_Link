@@ -186,3 +186,7 @@ If Firebase keys/config are missing, app startup continues in local/offline mode
 ### Current Firestore usage in app
 - `community_posts` collection is used by `lib/services/firestore_service.dart`.
 - App state migrates/syncs local community posts to Firestore when available.
+- The app now also syncs per-user app state to `user_data/{uid}` (profile, plants,
+  watering schedule, cart, and purchase history) when Firebase is available and
+  the user is signed in. This is implemented as a best-effort sync; the app
+  retains local SharedPreferences storage as an offline cache and fallback.

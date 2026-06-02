@@ -21,20 +21,261 @@ class AppState extends ChangeNotifier {
   static const _purchaseHistoryKey = 'purchase_history_v1';
   // removed unused _lastWaterDateKey constant
 
+  String? _activeUserId;
+  bool _isHydratingUserData = false;
+
   AppState() {
-    plants.addAll([]);
-    _loadPlants();
     _loadMarketplace();
-    _loadProfileSettings();
-    _loadAuthSession();
     _communityPosts.addAll(_seedCommunityPosts());
-    _loadCommunityPosts();
-    _loadCart();
-    _loadPurchaseHistory();
-    _loadWateringSchedule();
-    // Attempt background migration to Firestore (idempotent)
-    migrateLocalPostsToFirestore();
+    _activeUserId = FirebaseAuth.instance.currentUser?.uid;
+    unawaited(_bootstrapState());
   }
+
+  Future<void> _bootstrapState() async {
+    try {
+      await _loadAuthSession();
+      _activeUserId = FirebaseAuth.instance.currentUser?.uid;
+      if (_activeUserId != null) {
+        await _restoreSignedInUserData(
+          _activeUserId!,
+          fallbackProfileName: FirebaseAuth.instance.currentUser?.displayName,
+        );
+      } else {
+        await _loadProfileSettings();
+        await _loadPlants();
+        await _loadCart();
+        await _loadPurchaseHistory();
+        await _loadWateringSchedule();
+      }
+      await _loadCommunityPosts();
+      migrateLocalPostsToFirestore();
+    } catch (e, st) {
+      logger.w('Failed to bootstrap app state', error: e, stackTrace: st);
+    }
+  }
+
+  Future<void> _maybeSyncUserData() async {
+    if (_isHydratingUserData || _activeUserId == null) return;
+    if (!_firestore.isAvailable) return;
+    try {
+      final data = {
+        'profile': {
+          'profileName': profileName,
+          'profileEmoji': profileEmoji,
+          'vacationMode': vacationMode,
+          'notificationsEnabled': notificationsEnabled,
+          'isDarkMode': isDarkMode,
+        },
+        'userStats': {
+          'points': userStats.points,
+          'level': userStats.level,
+          'streak': userStats.streak,
+        },
+        'plants': plants.map((p) => p.toMap()).toList(),
+        'wateringSchedule': _wateringSchedule,
+        'cart': cartItems.map((c) => {'id': c.item.id, 'quantity': c.quantity}).toList(),
+        'purchaseHistory': _purchaseHistory.map((r) => r.toMap()).toList(),
+        'session': {
+          'isLoggedIn': isLoggedIn,
+          'sessionEmail': sessionEmail,
+          'lastWaterDate': _lastWaterDate,
+        }
+      };
+      await _firestore.setUserData(_activeUserId!, data);
+    } catch (e, st) {
+      logger.w('Failed to sync user data to Firestore', error: e, stackTrace: st);
+    }
+  }
+
+  void _resetUserOwnedState() {
+    plants
+      ..clear()
+      ..addAll(_seedPlants());
+    userStats = _defaultUserStats();
+    cartItems.clear();
+    _purchaseHistory.clear();
+    _latestReceipt = null;
+    _wateringSchedule.clear();
+    profileName = 'Plant Parent';
+    profileEmoji = '🌿';
+    vacationMode = false;
+    notificationsEnabled = true;
+    isDarkMode = false;
+    _lastWaterDate = null;
+  }
+
+  List<Plant> _seedPlants() => [
+        Plant(
+          id: '1',
+          name: 'Monstera Deliciosa',
+          species: 'Swiss Cheese Plant',
+          image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400',
+          notes: 'Loves bright indirect light and a weekly mist.',
+          lastWatered: '2 days ago',
+          nextWatering: 'Tomorrow',
+          health: PlantHealth.excellent,
+          level: 5,
+        ),
+        Plant(
+          id: '2',
+          name: 'Golden Pothos',
+          species: 'Epipremnum aureum',
+          image: 'https://images.unsplash.com/photo-1632207691143-643e2753a2c4?w=400',
+          notes: 'Fast grower. Trim the vines to keep it bushy.',
+          lastWatered: 'Yesterday',
+          nextWatering: 'In 2 days',
+          health: PlantHealth.good,
+          level: 3,
+        ),
+        Plant(
+          id: '3',
+          name: 'Snake Plant',
+          species: 'Sansevieria trifasciata',
+          image: 'https://images.unsplash.com/photo-1593482892290-d86fe3016e13?w=400',
+          notes: 'Very tolerant. Water sparingly.',
+          lastWatered: '5 days ago',
+          nextWatering: 'Today',
+          health: PlantHealth.warning,
+          level: 4,
+        ),
+      ];
+
+  UserStats _defaultUserStats() => UserStats(
+        points: 3450,
+        level: 12,
+        streak: 15,
+        badges: const [
+          Badge(id: '1', name: 'Green Thumb', icon: '🌱', unlocked: true),
+          Badge(id: '2', name: 'Caretaker', icon: '💚', unlocked: true),
+          Badge(id: '3', name: 'Streak Master', icon: '🔥', unlocked: true),
+          Badge(id: '4', name: 'Plant Doctor', icon: '🩺', unlocked: true),
+          Badge(id: '5', name: 'Collector', icon: '🏆', unlocked: false),
+          Badge(id: '6', name: 'Social Butterfly', icon: '🦋', unlocked: false),
+          Badge(id: '7', name: 'Trader', icon: '🤝', unlocked: false),
+          Badge(id: '8', name: 'Master Gardener', icon: '👑', unlocked: false),
+        ],
+      );
+
+  Future<void> _restoreSignedInUserData(String uid, {String? fallbackProfileName}) async {
+    _activeUserId = uid;
+    _isHydratingUserData = true;
+    try {
+      _resetUserOwnedState();
+      final loadedFromFirestore = await _loadUserDataFromFirestore(uid);
+      if (!loadedFromFirestore) {
+        await _loadPlants();
+        await _loadProfileSettings();
+        await _loadCart();
+        await _loadPurchaseHistory();
+        await _loadWateringSchedule();
+      }
+      if ((profileName.trim().isEmpty || profileName == 'Plant Parent')) {
+        final authName = FirebaseAuth.instance.currentUser?.displayName?.trim();
+        final resolvedName = fallbackProfileName?.trim().isNotEmpty == true
+            ? fallbackProfileName!.trim()
+            : authName;
+        if (resolvedName != null && resolvedName.isNotEmpty) {
+          profileName = resolvedName;
+        }
+      }
+      await _saveProfileSettings();
+      await _savePlants();
+      await _saveCart();
+      await _savePurchaseHistory();
+      await _saveWateringSchedule();
+      await _saveAuthSession();
+      _isHydratingUserData = false;
+      await _maybeSyncUserData();
+      notifyListeners();
+    } catch (e, st) {
+      _isHydratingUserData = false;
+      logger.w('Failed to restore signed-in user data', error: e, stackTrace: st);
+    }
+  }
+
+  Future<bool> _loadUserDataFromFirestore(String uid) async {
+    try {
+      if (!_firestore.isAvailable) return false;
+      final snapshot = await _firestore.watchUserData(uid).first;
+      if (!snapshot.exists) return false;
+      final data = snapshot.data();
+      if (data == null) return false;
+      // Merge profile
+      final profile = data['profile'] as Map<String, dynamic>?;
+      if (profile != null) {
+        profileName = (profile['profileName'] as String?)
+            ?? (data['profileName'] as String?)
+            ?? profileName;
+        profileEmoji = (profile['profileEmoji'] as String?) ?? profileEmoji;
+        vacationMode = (profile['vacationMode'] as bool?) ?? vacationMode;
+        notificationsEnabled = (profile['notificationsEnabled'] as bool?) ?? notificationsEnabled;
+        isDarkMode = (profile['isDarkMode'] as bool?) ?? isDarkMode;
+      }
+      // Merge userStats
+      final stats = data['userStats'] as Map<String, dynamic>?;
+      if (stats != null) {
+        userStats.points = (stats['points'] as num?)?.toInt() ?? userStats.points;
+        userStats.level = (stats['level'] as num?)?.toInt() ?? userStats.level;
+        userStats.streak = (stats['streak'] as num?)?.toInt() ?? userStats.streak;
+      }
+      // Merge plants
+      final remotePlants = data['plants'] as List<dynamic>?;
+      if (remotePlants != null) {
+        try {
+          final loaded = remotePlants
+              .map((p) => Plant.fromMap(Map<String, dynamic>.from(p as Map)))
+              .toList();
+          plants
+            ..clear()
+            ..addAll(loaded);
+        } catch (_) {}
+      }
+      // Merge watering schedule
+      final ws = data['wateringSchedule'] as Map<String, dynamic>?;
+      if (ws != null) {
+        _wateringSchedule.clear();
+        ws.forEach((k, v) {
+          _wateringSchedule[k] = v?.toString() ?? '';
+        });
+      }
+      // Merge cart
+      final remoteCart = data['cart'] as List<dynamic>?;
+      if (remoteCart != null) {
+        cartItems.clear();
+        for (final item in remoteCart) {
+          try {
+            final map = Map<String, dynamic>.from(item as Map);
+            try {
+              final it = marketplaceItems.firstWhere((m) => m.id == (map['id'] as String));
+              cartItems.add(CartItem(item: it, quantity: (map['quantity'] as num).toInt()));
+            } catch (_) {}
+          } catch (_) {}
+        }
+      }
+      // Merge purchase history
+      final remotePurchases = data['purchaseHistory'] as List<dynamic>?;
+      if (remotePurchases != null) {
+        try {
+          _purchaseHistory
+            ..clear()
+            ..addAll(remotePurchases.map((p) => PurchaseReceipt.fromMap(Map<String, dynamic>.from(p as Map))));
+          if (_purchaseHistory.isNotEmpty) _latestReceipt = _purchaseHistory.first;
+        } catch (_) {}
+      }
+      final session = data['session'] as Map<String, dynamic>?;
+      if (session != null) {
+        isLoggedIn = (session['isLoggedIn'] as bool?) ?? isLoggedIn;
+        sessionEmail = (session['sessionEmail'] as String?) ?? sessionEmail;
+        _lastWaterDate = (session['lastWaterDate'] as String?) ?? _lastWaterDate;
+      }
+      return true;
+    } catch (e, st) {
+      logger.w('Failed to load user data from Firestore', error: e, stackTrace: st);
+      return false;
+    }
+  }
+
+
 
   final List<Plant> plants = [
     Plant(
@@ -293,6 +534,7 @@ class AppState extends ChangeNotifier {
   Future<void> _savePlants() async {
     final payload = jsonEncode(plants.map((p) => p.toMap()).toList());
     await PersistenceService.instance.setString(_plantsPrefsKey, payload);
+    if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
   }
 
   Future<void> _loadProfileSettings() async {
@@ -325,6 +567,7 @@ class AppState extends ChangeNotifier {
       'isDarkMode': isDarkMode,
     });
     await PersistenceService.instance.setString(_profilePrefsKey, payload);
+    if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
   }
 
   void setDarkMode(bool value) {
@@ -368,6 +611,7 @@ class AppState extends ChangeNotifier {
     try {
       await PersistenceService.instance.setString(_authPrefsKey, payload);
     } catch (_) {}
+    if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
@@ -536,6 +780,7 @@ class AppState extends ChangeNotifier {
   Future<void> _saveWateringSchedule() async {
     try {
       await PersistenceService.instance.setString(_wateringScheduleKey, jsonEncode(_wateringSchedule));
+      if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
     } catch (_) {}
   }
 
@@ -772,6 +1017,12 @@ class AppState extends ChangeNotifier {
         }
         sessionEmail = FirebaseAuth.instance.currentUser?.email ?? trimmedEmail;
         isLoggedIn = FirebaseAuth.instance.currentUser != null;
+        if (isLoggedIn && FirebaseAuth.instance.currentUser != null) {
+          await _restoreSignedInUserData(
+            FirebaseAuth.instance.currentUser!.uid,
+            fallbackProfileName: isSignup && trimmedName.isNotEmpty ? trimmedName : null,
+          );
+        }
       } else {
         // local fallback
         if (isSignup && trimmedName.isNotEmpty) profileName = trimmedName;
@@ -809,6 +1060,12 @@ class AppState extends ChangeNotifier {
       }
       sessionEmail = result.user?.email;
       isLoggedIn = result.user != null;
+      if (isLoggedIn && result.user != null) {
+        await _restoreSignedInUserData(
+          result.user!.uid,
+          fallbackProfileName: result.user!.displayName,
+        );
+      }
       await _saveAuthSession();
       notifyListeners();
       return null;
@@ -828,6 +1085,8 @@ class AppState extends ChangeNotifier {
     isLoggedIn = false;
     sessionEmail = null;
     justSignedOut = true;
+    _activeUserId = null;
+    _resetUserOwnedState();
     // Update listeners immediately so navigation can respond without
     // waiting for SharedPreferences I/O (which can be flaky in tests).
     notifyListeners();
@@ -926,6 +1185,7 @@ class AppState extends ChangeNotifier {
     try {
       final payload = jsonEncode(_purchaseHistory.map((r) => r.toMap()).toList());
       await PersistenceService.instance.setString(_purchaseHistoryKey, payload);
+      if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
     } catch (_) {}
   }
 
@@ -966,6 +1226,7 @@ class AppState extends ChangeNotifier {
     try {
       final payload = jsonEncode(cartItems.map((c) => {'id': c.item.id, 'quantity': c.quantity}).toList());
       await PersistenceService.instance.setString(_cartPrefsKey, payload);
+      if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
     } catch (e, st) {
       logger.w('Failed to save cart', error: e, stackTrace: st);
     }
