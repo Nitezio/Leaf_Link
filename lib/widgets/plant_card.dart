@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'dart:io' show File;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/models.dart';
+import '../models/app_state.dart';
 import '../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../screens/growth_detector_screen.dart';
+import 'plant_form_sheet.dart';
 
 class PlantCard extends StatelessWidget {
   final Plant plant;
@@ -96,7 +100,7 @@ class PlantCard extends StatelessWidget {
                 // Level badge (top right)
                 Positioned(
                   top: 12,
-                  right: 12,
+                  right: 48,
                   child: Container(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -118,6 +122,36 @@ class PlantCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                ),
+                // Edit / Delete Menu
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: PopupMenuButton<String>(
+                    icon: Icon(Icons.more_vert, color: Colors.white),
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Theme.of(context).cardColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          builder: (_) => PlantFormSheet(plant: plant),
+                        );
+                      } else if (value == 'delete') {
+                        context.read<AppState>().deletePlant(plant.id);
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete', style: TextStyle(color: AppColors.destructive)),
+                      ),
+                    ],
                   ),
                 ),
                 // Plant name
@@ -204,31 +238,29 @@ class PlantCard extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () => onScan(plant.id),
-                      child: Container(
-                        width: 50,
+                    Expanded(
+                      child: SizedBox(
                         height: 50,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Theme.of(context).colorScheme.outline, width: 2),
-                        ),
-                        child: Icon(Icons.camera_alt_outlined, size: 22, color: Theme.of(context).colorScheme.onSurface),
-                      ),
-                    ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: onTap,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => GrowthDetectorScreen(plant: plant),
+                              ),
+                            );
+                          },
                           style: OutlinedButton.styleFrom(
                             shape: StadiumBorder(),
-                            side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                            foregroundColor: Theme.of(context).colorScheme.onSurface,
+                            side: BorderSide(color: AppColors.secondary),
+                            foregroundColor: AppColors.secondary,
+                            padding: EdgeInsets.symmetric(horizontal: 8),
                           ),
-                          child: Text('Details'),
+                          icon: Icon(Icons.auto_awesome, size: 16),
+                          label: Text('Growth', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ],

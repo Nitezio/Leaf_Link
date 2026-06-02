@@ -7,6 +7,7 @@ import '../widgets/weather_panel.dart';
 import '../widgets/responsive_body.dart';
 import 'garden_tab.dart';
 import 'plant_detail_screen.dart';
+import '../widgets/plant_form_sheet.dart';
 
 class HomeTab extends StatelessWidget {
   final VoidCallback onGoToScan;
@@ -132,12 +133,32 @@ class HomeTab extends StatelessWidget {
             // Plants
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Your Plants',
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Your Plants',
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.add_circle_outline, color: AppColors.primary),
+                    tooltip: 'Add new plant',
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Theme.of(context).cardColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                        ),
+                        builder: (_) => PlantFormSheet(),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 12),
