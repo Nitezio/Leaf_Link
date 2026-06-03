@@ -10,7 +10,7 @@ class ImageService {
   /// Returns an [XFile] for the selected image (works on web and mobile).
   static Future<XFile?> pickXFile(ImageSource source) async {
     if (pickXFileOverride != null) return await pickXFileOverride!();
-    final XFile? file = await _picker.pickImage(source: source, imageQuality: 80);
+    final XFile? file = await _picker.pickImage(source: source, imageQuality: 50, maxWidth: 800, maxHeight: 800);
     return file;
   }
 

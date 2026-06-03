@@ -1059,9 +1059,14 @@ class AppState extends ChangeNotifier {
         result = await FirebaseAuth.instance.signInWithPopup(provider);
       } else {
         // Mobile: use google_sign_in plugin, then exchange ID token with Firebase.
-        await GoogleSignIn.instance.initialize();
-        final googleUser = await GoogleSignIn.instance.authenticate();
-        final googleAuth = googleUser.authentication;
+        final googleSignIn = GoogleSignIn(
+          serverClientId: '599899764817-dcl0ob3li25tq78ofudnuhomiv7bekf3.apps.googleusercontent.com',
+        );
+        final googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          return 'Sign in aborted by user';
+        }
+        final googleAuth = await googleUser.authentication;
         final credential = GoogleAuthProvider.credential(
           idToken: googleAuth.idToken,
         );
