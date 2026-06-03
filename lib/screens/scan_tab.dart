@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'ar_preview_screen.dart';
 import '../services/gemini_service.dart';
 import '../services/image_service.dart';
 import '../models/models.dart';
@@ -393,13 +394,9 @@ class _ARPlantPlacement extends StatelessWidget {
                     colorTag: ColorTag.neutral,
                   ),
                 );
-                showModalBottomSheet<void>(
-                  context: context,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
-                  builder: (_) => _ArPreviewSheet(),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ArPreviewScreen()),
                 );
               },
               icon: Icon(Icons.camera_alt_outlined, size: 18),
@@ -628,88 +625,12 @@ class _ScanHistoryTile extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 8),
-          Text(
-            scan.colorTag == ColorTag.good ? 'Good' : scan.colorTag == ColorTag.warning ? 'Warning' : 'Demo',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _ArPreviewSheet extends StatelessWidget {
-  _ArPreviewSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'AR Placement Preview',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-            SizedBox(height: 12),
-            Container(
-              height: 180,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: LinearGradient(
-                  colors: [Color(0xFF101820), Color(0xFF1F2A44)],
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.view_in_ar_rounded, color: Colors.white, size: 44),
-                    SizedBox(height: 10),
-                    Text(
-                      'Move your device to place the plant',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Demo mode only in the prototype',
-                      style: TextStyle(color: Color(0xCCFFFFFF), fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF6C63FF),
-                  foregroundColor: Colors.white,
-                  shape: StadiumBorder(),
-                ),
-                child: Text('Done'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _GridPainter extends CustomPainter {
   @override
