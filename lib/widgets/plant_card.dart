@@ -311,8 +311,16 @@ class _WaterButtonState extends State<_WaterButton> {
   void _updateState() {
     if (!mounted) return;
     
-    if (widget.plant.lastWateredIso == null) {
-      // Fallback for plants without iso date
+    String? isoString = widget.plant.lastWateredIso;
+    if (isoString == null) {
+      final waterEvents = widget.plant.careHistory.where((e) => e.type == 'water');
+      if (waterEvents.isNotEmpty) {
+        isoString = waterEvents.first.timestamp;
+      }
+    }
+    
+    if (isoString == null) {
+      // Fallback for plants without iso date or care history
       setState(() {
         _recentlyWatered = widget.plant.lastWatered == 'Just now' || widget.plant.lastWatered == 'Today';
         _countdownText = _recentlyWatered ? 'Wait for next round' : 'Water Now';
@@ -320,18 +328,18 @@ class _WaterButtonState extends State<_WaterButton> {
       return;
     }
 
-    final lastWateredAt = DateTime.parse(widget.plant.lastWateredIso!);
+    final lastWateredAt = DateTime.parse(isoString);
     final now = DateTime.now();
     final difference = now.difference(lastWateredAt);
     
-    // 48 hours = 2 days cooldown
-    if (difference.inHours >= 48) {
+    // 72 hours = 3 days cooldown
+    if (difference.inHours >= 72) {
       setState(() {
         _recentlyWatered = false;
         _countdownText = 'Water Now';
       });
     } else {
-      final remaining = const Duration(hours: 48) - difference;
+      final remaining = const Duration(hours: 72) - difference;
       final hours = remaining.inHours;
       final minutes = remaining.inMinutes % 60;
       final hoursStr = hours.toString().padLeft(2, '0');
