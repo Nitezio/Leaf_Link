@@ -43,6 +43,7 @@ class Plant {
   final String image;
   final String notes;
   String lastWatered;
+  String? lastWateredIso;
   String nextWatering;
   PlantHealth health;
   final int level;
@@ -55,6 +56,7 @@ class Plant {
     required this.image,
     this.notes = '',
     required this.lastWatered,
+    this.lastWateredIso,
     required this.nextWatering,
     required this.health,
     required this.level,
@@ -67,6 +69,7 @@ class Plant {
     String? image,
     String? notes,
     String? lastWatered,
+    String? lastWateredIso,
     String? nextWatering,
     PlantHealth? health,
     int? level,
@@ -80,6 +83,7 @@ class Plant {
       notes: notes ?? this.notes,
       level: level ?? this.level,
       lastWatered: lastWatered ?? this.lastWatered,
+      lastWateredIso: lastWateredIso ?? this.lastWateredIso,
       nextWatering: nextWatering ?? this.nextWatering,
       health: health ?? this.health,
       careHistory: careHistory ?? this.careHistory,
@@ -94,6 +98,7 @@ class Plant {
       'image': image,
       'notes': notes,
       'lastWatered': lastWatered,
+      'lastWateredIso': lastWateredIso,
       'nextWatering': nextWatering,
       'health': health.index,
       'level': level,
@@ -109,6 +114,7 @@ class Plant {
       image: map['image'] as String,
       notes: (map['notes'] as String?) ?? '',
       lastWatered: map['lastWatered'] as String,
+      lastWateredIso: map['lastWateredIso'] as String?,
       nextWatering: map['nextWatering'] as String,
       health: PlantHealth.values[map['health'] as int],
       level: map['level'] as int,

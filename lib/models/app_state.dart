@@ -287,6 +287,7 @@ class AppState extends ChangeNotifier {
       image: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?w=400',
       notes: 'Loves bright indirect light and a weekly mist.',
       lastWatered: '2 days ago',
+      lastWateredIso: DateTime.now().subtract(const Duration(days: 2, hours: 1)).toIso8601String(),
       nextWatering: 'Tomorrow',
       health: PlantHealth.excellent,
       level: 5,
@@ -298,6 +299,7 @@ class AppState extends ChangeNotifier {
       image: 'https://images.unsplash.com/photo-1632207691143-643e2753a2c4?w=400',
       notes: 'Fast grower. Trim the vines to keep it bushy.',
       lastWatered: 'Yesterday',
+      lastWateredIso: DateTime.now().subtract(const Duration(days: 1)).toIso8601String(),
       nextWatering: 'In 2 days',
       health: PlantHealth.good,
       level: 3,
@@ -309,6 +311,7 @@ class AppState extends ChangeNotifier {
       image: 'https://images.unsplash.com/photo-1593482892290-d86fe3016e13?w=400',
       notes: 'Very tolerant. Water sparingly.',
       lastWatered: '5 days ago',
+      lastWateredIso: DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
       nextWatering: 'Today',
       health: PlantHealth.warning,
       level: 4,
@@ -476,6 +479,7 @@ class AppState extends ChangeNotifier {
       );
       final updated = plants[idx].copyWith(
         lastWatered: 'Just now',
+        lastWateredIso: iso,
         nextWatering: 'In 3 days',
         health: PlantHealth.excellent,
         careHistory: [event, ...plants[idx].careHistory],

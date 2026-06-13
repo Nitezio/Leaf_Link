@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'dart:io' show File;
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/models.dart';
 import '../models/app_state.dart';
@@ -223,21 +224,10 @@ class PlantCard extends StatelessWidget {
                       Expanded(
                         child: SizedBox(
                           height: 50,
-                          child: Builder(builder: (context) {
-                            final bool recentlyWatered = plant.lastWatered == 'Just now' || plant.lastWatered == 'Today';
-                            return ElevatedButton.icon(
-                              onPressed: recentlyWatered ? () {} : () => onWater(plant.id),
-                              icon: Icon(recentlyWatered ? Icons.timer_outlined : Icons.water_drop_outlined, size: 18),
-                              label: Text(recentlyWatered ? 'Wait for next round' : 'Water Now', style: TextStyle(fontSize: recentlyWatered ? 11 : 14)),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: recentlyWatered ? Colors.amber : AppColors.primary,
-                                foregroundColor: recentlyWatered ? Colors.black87 : Colors.white,
-                                shape: StadiumBorder(),
-                                elevation: 2,
-                                shadowColor: (recentlyWatered ? Colors.amber : AppColors.primary).withValues(alpha: 0.2),
-                              ),
-                            );
-                          }),
+                          child: _WaterButton(
+                            plant: plant,
+                            onWater: () => onWater(plant.id),
+                          ),
                         ),
                       ),
                       SizedBox(width: 8),
@@ -281,5 +271,99 @@ class PlantCard extends StatelessWidget {
     PlantHealth.good: {'text': 'Healthy', 'icon': '🌿'},
     PlantHealth.warning: {'text': 'Needs Care', 'icon': '💧'},
   };
+}
+
+class _WaterButton extends StatefulWidget {
+  final Plant plant;
+  final VoidCallback onWater;
+
+  const _WaterButton({required this.plant, required this.onWater});
+
+  @override
+  State<_WaterButton> createState() => _WaterButtonState();
+}
+
+class _WaterButtonState extends State<_WaterButton> {
+  Timer? _timer;
+  late bool _recentlyWatered;
+  String _countdownText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateState();
+    // Update the button every minute to save performance
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) => _updateState());
+  }
+
+  @override
+  void didUpdateWidget(covariant _WaterButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateState() {
+    if (!mounted) return;
+    
+    if (widget.plant.lastWateredIso == null) {
+      // Fallback for plants without iso date
+      setState(() {
+        _recentlyWatered = widget.plant.lastWatered == 'Just now' || widget.plant.lastWatered == 'Today';
+        _countdownText = _recentlyWatered ? 'Wait for next round' : 'Water Now';
+      });
+      return;
+    }
+
+    final lastWateredAt = DateTime.parse(widget.plant.lastWateredIso!);
+    final now = DateTime.now();
+    final difference = now.difference(lastWateredAt);
+    
+    // 48 hours = 2 days cooldown
+    if (difference.inHours >= 48) {
+      setState(() {
+        _recentlyWatered = false;
+        _countdownText = 'Water Now';
+      });
+    } else {
+      final remaining = const Duration(hours: 48) - difference;
+      final hours = remaining.inHours;
+      final minutes = remaining.inMinutes % 60;
+      
+      setState(() {
+        _recentlyWatered = true;
+        _countdownText = 'Wait for next round\n${hours}h ${minutes}m';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      // using null correctly applies the disabled styling
+      onPressed: _recentlyWatered ? null : widget.onWater,
+      icon: Icon(_recentlyWatered ? Icons.timer_outlined : Icons.water_drop_outlined, size: 18),
+      label: Text(
+        _countdownText,
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: _recentlyWatered ? 10 : 14, height: 1.2),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _recentlyWatered ? Colors.amber : Colors.blue,
+        disabledBackgroundColor: Colors.amber.withValues(alpha: 0.9),
+        disabledForegroundColor: Colors.black87,
+        foregroundColor: _recentlyWatered ? Colors.black87 : Colors.white,
+        shape: const StadiumBorder(),
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        shadowColor: (_recentlyWatered ? Colors.amber : Colors.blue).withValues(alpha: 0.2),
+      ),
+    );
+  }
 }
 
