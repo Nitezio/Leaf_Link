@@ -292,8 +292,8 @@ class _WaterButtonState extends State<_WaterButton> {
   void initState() {
     super.initState();
     _updateState();
-    // Update the button every minute to save performance
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) => _updateState());
+    // Update the button every second
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateState());
   }
 
   @override
@@ -340,14 +340,20 @@ class _WaterButtonState extends State<_WaterButton> {
       });
     } else {
       final remaining = const Duration(hours: 72) - difference;
-      final hours = remaining.inHours;
+      final days = remaining.inDays;
+      final hours = remaining.inHours % 24;
       final minutes = remaining.inMinutes % 60;
-      final hoursStr = hours.toString().padLeft(2, '0');
-      final minutesStr = minutes.toString().padLeft(2, '0');
+      final seconds = remaining.inSeconds % 60;
+      
+      final parts = <String>[];
+      if (days > 0) parts.add('${days}d');
+      if (hours > 0 || days > 0) parts.add('${hours}h');
+      parts.add('${minutes}m');
+      parts.add('${seconds}s');
       
       setState(() {
         _recentlyWatered = true;
-        _countdownText = 'Wait for next round\n${hoursStr}h ${minutesStr}m';
+        _countdownText = 'Wait for next round\n${parts.join(' ')}';
       });
     }
   }
