@@ -9,9 +9,80 @@ import 'garden_tab.dart';
 import 'plant_detail_screen.dart';
 import '../widgets/plant_form_sheet.dart';
 
-class HomeTab extends StatelessWidget {
+class HomeTab extends StatefulWidget {
   final VoidCallback onGoToScan;
   HomeTab({super.key, required this.onGoToScan});
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = context.read<AppState>();
+      final int earnedTokens = state.checkAndClaimDailyToken();
+      if (earnedTokens > 0) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            contentPadding: EdgeInsets.all(24),
+            backgroundColor: Theme.of(context).cardColor,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.confirmation_num_rounded, size: 64, color: AppColors.secondary),
+                ),
+                SizedBox(height: 24),
+                Text(
+                  'Daily Check-in!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  "You've earned $earnedTokens Leaf Token${earnedTokens > 1 ? 's' : ''} for visiting your garden today (Day ${state.loginStreak} Streak!). 🌿\n\nUse ${earnedTokens > 1 ? 'them' : 'it'} in the Marketplace to get an exclusive 20% discount on any plant!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: StadiumBorder(),
+                      elevation: 2,
+                    ),
+                    child: Text('Awesome!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,11 +183,15 @@ class HomeTab extends StatelessWidget {
                   ),
                   SizedBox(width: 10),
                   Expanded(
-                    child: _statCard(context, '${state.userStats.streak}', 'Day Streak'),
+                    child: _statCard(context, '${state.userStats.streak}', 'Streak'),
                   ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 8),
                   Expanded(
                     child: _statCard(context, '${state.userStats.level}', 'Level'),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: _statCard(context, '${state.userStats.tokens}', 'Tokens'),
                   ),
                 ],
               ),
@@ -178,7 +253,7 @@ class HomeTab extends StatelessWidget {
                         ),
                       );
                     },
-                    onScan: (_) => onGoToScan(),
+                    onScan: (_) => widget.onGoToScan(),
                     onTap: () async {
                       await Navigator.push(
                         context,
@@ -212,7 +287,7 @@ class HomeTab extends StatelessWidget {
                       icon: Icons.camera_alt_outlined,
                       title: 'AR Preview',
                       sub: 'Place plants in AR',
-                      onTap: onGoToScan,
+                      onTap: widget.onGoToScan,
                     ),
                   ),
                   SizedBox(width: 12),
@@ -222,7 +297,7 @@ class HomeTab extends StatelessWidget {
                       icon: Icons.trending_up_rounded,
                       title: 'Growth Predict',
                       sub: 'See future growth',
-                      onTap: onGoToScan,
+                      onTap: widget.onGoToScan,
                     ),
                   ),
                 ],

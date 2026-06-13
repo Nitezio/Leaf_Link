@@ -218,26 +218,29 @@ class PlantCard extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 50,
-                        child: ElevatedButton.icon(
-                          onPressed: () => onWater(plant.id),
-                          icon: Icon(Icons.water_drop_outlined, size: 18),
-                          label: Text('Water Now'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: StadiumBorder(),
-                            elevation: 2,
-                            shadowColor: AppColors.primary.withValues(alpha: 0.2),
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: Builder(builder: (context) {
+                            final bool recentlyWatered = plant.lastWatered == 'Just now' || plant.lastWatered == 'Today';
+                            return ElevatedButton.icon(
+                              onPressed: recentlyWatered ? () {} : () => onWater(plant.id),
+                              icon: Icon(recentlyWatered ? Icons.timer_outlined : Icons.water_drop_outlined, size: 18),
+                              label: Text(recentlyWatered ? 'Wait for next round' : 'Water Now', style: TextStyle(fontSize: recentlyWatered ? 11 : 14)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: recentlyWatered ? Colors.amber : AppColors.primary,
+                                foregroundColor: recentlyWatered ? Colors.black87 : Colors.white,
+                                shape: StadiumBorder(),
+                                elevation: 2,
+                                shadowColor: (recentlyWatered ? Colors.amber : AppColors.primary).withValues(alpha: 0.2),
+                              ),
+                            );
+                          }),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 8),
+                      SizedBox(width: 8),
                     Expanded(
                       child: SizedBox(
                         height: 50,

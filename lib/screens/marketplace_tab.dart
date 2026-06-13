@@ -36,6 +36,7 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
   }
 
   void _showCartSheet(BuildContext context, AppState state) {
+    bool useToken = false;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -44,120 +45,138 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (_) {
-        return Consumer<AppState>(builder: (context, stateInside, _) {
-          final cart = stateInside.cartItems;
-          return SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 10, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Cart',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                SizedBox(height: 12),
-                if (cart.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'Your cart is empty. Add a plant to get started.',
-                      style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
-                    ),
-                  )
-                else
-                  Flexible(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: cart.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final cartItem = cart[index];
-                        return _CartRow(
-                          item: cartItem,
-                          onAdd: () => stateInside.incrementCartItem(cartItem.item.id),
-                          onRemove: () => stateInside.decrementCartItem(cartItem.item.id),
-                          onDelete: () => stateInside.removeFromCart(cartItem.item.id),
-                        );
-                      },
-                    ),
-                  ),
-                SizedBox(height: 12),
-                Row(
+        return StatefulBuilder(builder: (context, setStateSheet) {
+          return Consumer<AppState>(builder: (context, stateInside, _) {
+            final cart = stateInside.cartItems;
+            final hasToken = stateInside.userStats.tokens > 0;
+            if (!hasToken) useToken = false;
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 10, 16, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: cart.isEmpty ? null : stateInside.clearCart,
-                        style: OutlinedButton.styleFrom(
-                          shape: StadiumBorder(),
-                          side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                        ),
-                        child: Text('Clear Cart'),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Cart',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: cart.isEmpty
-                            ? null
-                            : () async {
-                                final navigator = Navigator.of(context);
-                                final messenger = ScaffoldMessenger.of(context);
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (dctx) => AlertDialog(
-                                    title: Text('Confirm purchase'),
-                                    content: Text('Buy ${stateInside.cartCount} item(s) from your cart?'),
-                                    actions: [
-                                      TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text('Cancel')),
-                                      TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text('Buy')),
-                                    ],
-                                  ),
-                                );
-                                if (confirm == true) {
-                                  final ok = stateInside.checkoutCart();
-                                  final receipt = stateInside.latestReceipt;
-                                  messenger.showSnackBar(SnackBar(content: Text(ok ? 'Purchase successful' : 'Purchase failed: insufficient stock')));
-                                  if (ok) navigator.pop();
-                                  if (ok && receipt != null) {
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      if (mounted) {
-                                        _showReceiptDialog(context, receipt);
-                                      }
-                                    });
-                                  }
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          shape: StadiumBorder(),
-                        ),
-                        child: Text('Checkout (${stateInside.cartCount})'),
+                  ),
+                  SizedBox(height: 12),
+                  if (cart.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Your cart is empty. Add a plant to get started.',
+                        style: TextStyle(color: (Theme.of(context).textTheme.bodySmall?.color ?? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
                       ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: cart.length,
+                        separatorBuilder: (_, __) => SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final cartItem = cart[index];
+                          return _CartRow(
+                            item: cartItem,
+                            onAdd: () => stateInside.incrementCartItem(cartItem.item.id),
+                            onRemove: () => stateInside.decrementCartItem(cartItem.item.id),
+                            onDelete: () => stateInside.removeFromCart(cartItem.item.id),
+                          );
+                        },
+                      ),
+                    ),
+                  if (cart.isNotEmpty && hasToken) ...[
+                    SizedBox(height: 8),
+                    SwitchListTile(
+                      title: Text('Use Daily Token (20% off)'),
+                      subtitle: Text('Tokens available: ${stateInside.userStats.tokens}'),
+                      value: useToken,
+                      onChanged: (val) {
+                        setStateSheet(() => useToken = val);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                      activeColor: AppColors.primary,
                     ),
                   ],
-                ),
-              ],
+                  SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: cart.isEmpty ? null : stateInside.clearCart,
+                          style: OutlinedButton.styleFrom(
+                            shape: StadiumBorder(),
+                            side: BorderSide(color: Theme.of(context).colorScheme.outline),
+                          ),
+                          child: Text('Clear Cart'),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: cart.isEmpty
+                              ? null
+                              : () async {
+                                  final navigator = Navigator.of(context);
+                                  final messenger = ScaffoldMessenger.of(context);
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (dctx) => AlertDialog(
+                                      title: Text('Confirm purchase'),
+                                      content: Text('Buy ${stateInside.cartCount} item(s) from your cart?'),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(dctx, false), child: Text('Cancel')),
+                                        TextButton(onPressed: () => Navigator.pop(dctx, true), child: Text('Buy')),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    final ok = stateInside.checkoutCart(useToken: useToken);
+                                    final receipt = stateInside.latestReceipt;
+                                    messenger.showSnackBar(SnackBar(content: Text(ok ? 'Purchase successful' : 'Purchase failed: insufficient stock')));
+                                    if (ok) navigator.pop();
+                                    if (ok && receipt != null) {
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (mounted) {
+                                          _showReceiptDialog(context, receipt);
+                                        }
+                                      });
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            shape: StadiumBorder(),
+                          ),
+                          child: Text('Checkout (${stateInside.cartCount})'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
+          );
+          });
         });
       },
     );
@@ -378,6 +397,26 @@ class _MarketplaceTabState extends State<MarketplaceTab> {
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    margin: EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.stars_rounded, color: Colors.amber[600], size: 16),
+                        SizedBox(width: 4),
+                        Text(
+                          '${state.userStats.tokens}',
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber[700]),
+                        ),
+                      ],
                     ),
                   ),
                   GestureDetector(

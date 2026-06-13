@@ -138,12 +138,14 @@ class UserStats {
   int level;
   int streak;
   List<Badge> badges;
+  int tokens;
 
   UserStats({
     required this.points,
     required this.level,
     required this.streak,
     required this.badges,
+    this.tokens = 0,
   });
 }
 

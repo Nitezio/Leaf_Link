@@ -144,6 +144,7 @@ class AppState extends ChangeNotifier {
         points: 3450,
         level: 12,
         streak: 15,
+        tokens: 0,
         badges: const [
           Badge(id: '1', name: 'Green Thumb', icon: '🌱', unlocked: true),
           Badge(id: '2', name: 'Caretaker', icon: '💚', unlocked: true),
@@ -217,6 +218,7 @@ class AppState extends ChangeNotifier {
         userStats.points = (stats['points'] as num?)?.toInt() ?? userStats.points;
         userStats.level = (stats['level'] as num?)?.toInt() ?? userStats.level;
         userStats.streak = (stats['streak'] as num?)?.toInt() ?? userStats.streak;
+        userStats.tokens = (stats['tokens'] as num?)?.toInt() ?? userStats.tokens;
       }
       // Merge plants
       final remotePlants = data['plants'] as List<dynamic>?;
@@ -396,7 +398,10 @@ class AppState extends ChangeNotifier {
   bool justSignedOut = false;
   String? sessionEmail;
   String? _lastWaterDate; // YYYY-MM-DD
+  String? _lastLoginDate; // YYYY-MM-DD
+  int _loginStreak = 0;
 
+  int get loginStreak => _loginStreak;
   List<CommunityPost> get communityPosts => List.unmodifiable(_communityPosts);
   bool get communityLoaded => _communityLoaded;
   List<PurchaseReceipt> get purchaseHistory => List.unmodifiable(_purchaseHistory);
@@ -600,6 +605,8 @@ class AppState extends ChangeNotifier {
       isLoggedIn = (map['isLoggedIn'] as bool?) ?? false;
       sessionEmail = map['sessionEmail'] as String?;
       _lastWaterDate = map['lastWaterDate'] as String?;
+      _lastLoginDate = map['lastLoginDate'] as String?;
+      _loginStreak = (map['loginStreak'] as num?)?.toInt() ?? 0;
       notifyListeners();
     } catch (e, st) {
       logger.e('Failed to load auth session', error: e, stackTrace: st);
@@ -612,6 +619,8 @@ class AppState extends ChangeNotifier {
       'isLoggedIn': isLoggedIn,
       'sessionEmail': sessionEmail,
       'lastWaterDate': _lastWaterDate,
+      'lastLoginDate': _lastLoginDate,
+      'loginStreak': _loginStreak,
     });
     // persist to secure storage primarily
     try {
@@ -621,6 +630,40 @@ class AppState extends ChangeNotifier {
       await PersistenceService.instance.setString(_authPrefsKey, payload);
     } catch (_) {}
     if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
+  }
+
+  int checkAndClaimDailyToken() {
+    final now = DateTime.now();
+    final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    
+    if (_lastLoginDate != todayKey) {
+      if (_lastLoginDate == null) {
+        _loginStreak = 1;
+      } else {
+        try {
+          final parts = _lastLoginDate!.split('-').map((s) => int.parse(s)).toList();
+          final prev = DateTime(parts[0], parts[1], parts[2]);
+          final todayDt = DateTime(now.year, now.month, now.day);
+          final diff = todayDt.difference(prev).inDays;
+          if (diff == 1) {
+            _loginStreak += 1;
+          } else if (diff > 1) {
+            _loginStreak = 1;
+          }
+        } catch (_) {
+          _loginStreak = 1;
+        }
+      }
+      
+      int tokensToAward = _loginStreak > 5 ? 5 : _loginStreak;
+      userStats.tokens += tokensToAward;
+      _lastLoginDate = todayKey;
+      _saveAuthSession();
+      if (!_isHydratingUserData) unawaited(_maybeSyncUserData());
+      notifyListeners();
+      return tokensToAward;
+    }
+    return 0;
   }
 
   void addCommunityPost(String caption, {String? imageUrl}) {
@@ -836,8 +879,12 @@ class AppState extends ChangeNotifier {
 
   /// Simulate a checkout: validate stock, decrement inventory, clear cart.
   /// Returns true if checkout succeeded.
-  bool checkoutCart() {
+  bool checkoutCart({bool useToken = false}) {
     // validate
+    if (useToken && userStats.tokens <= 0) {
+      useToken = false;
+    }
+
     for (final ci in cartItems) {
       final storeItem = marketplaceItems.firstWhere((it) => it.id == ci.item.id, orElse: () => ci.item);
       if (ci.quantity > storeItem.stock) return false;
@@ -854,7 +901,13 @@ class AppState extends ChangeNotifier {
         )
         .toList();
     final pointsAwarded = cartItems.fold<int>(0, (s, c) => s + (c.quantity * 10));
-    final subtotal = cartItems.fold<double>(0, (sum, ci) => sum + (_parseCurrency(ci.item.price) * ci.quantity));
+    double subtotal = cartItems.fold<double>(0, (sum, ci) => sum + (_parseCurrency(ci.item.price) * ci.quantity));
+    
+    if (useToken) {
+      subtotal = subtotal * 0.8; // 20% discount
+      userStats.tokens -= 1;
+    }
+
     _latestReceipt = PurchaseReceipt(
       id: _generateId(),
       purchasedAt: DateTime.now().toIso8601String(),
