@@ -334,10 +334,12 @@ class _WaterButtonState extends State<_WaterButton> {
       final remaining = const Duration(hours: 48) - difference;
       final hours = remaining.inHours;
       final minutes = remaining.inMinutes % 60;
+      final hoursStr = hours.toString().padLeft(2, '0');
+      final minutesStr = minutes.toString().padLeft(2, '0');
       
       setState(() {
         _recentlyWatered = true;
-        _countdownText = 'Wait for next round\n${hours}h ${minutes}m';
+        _countdownText = 'Wait for next round\n${hoursStr}h ${minutesStr}m';
       });
     }
   }

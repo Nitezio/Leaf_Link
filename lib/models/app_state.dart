@@ -70,6 +70,7 @@ class AppState extends ChangeNotifier {
           'points': userStats.points,
           'level': userStats.level,
           'streak': userStats.streak,
+          'tokens': userStats.tokens,
         },
         'plants': plants.map((p) => p.toMap()).toList(),
         'wateringSchedule': _wateringSchedule,
@@ -79,6 +80,8 @@ class AppState extends ChangeNotifier {
           'isLoggedIn': isLoggedIn,
           'sessionEmail': sessionEmail,
           'lastWaterDate': _lastWaterDate,
+          'lastLoginDate': _lastLoginDate,
+          'loginStreak': _loginStreak,
         }
       };
       await _firestore.setUserData(_activeUserId!, data);
